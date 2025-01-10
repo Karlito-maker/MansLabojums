@@ -1,0 +1,35 @@
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MansLabojums.Views.TeachersPage"
+             Title="Pasniedzēji">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="10">
+
+            <Label Text="Pasniedzēju saraksts"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <ListView x:Name="TeachersListView"
+                      SelectedItem="None"
+                      ItemSelected="OnTeacherSelected">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextCell 
+                            Text="{Binding Name}"
+                            Detail="{Binding Surname}" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <HorizontalStackLayout Spacing="10">
+                <Button Text="Pievienot" Clicked="OnAddTeacherClicked" />
+                <Button Text="Rediģēt" Clicked="OnEditTeacherClicked" />
+                <Button Text="Dzēst" Clicked="OnDeleteTeacherClicked" />
+            </HorizontalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:local="clr-namespace:MansLabojums"
+       xmlns:views="clr-namespace:MansLabojums.Views"
+       x:Class="MansLabojums.AppShell">
+
+    <!-- Galvenā navigācija -->
+    <ShellContent
+        Title="Sākumlapa"
+        ContentTemplate="{DataTemplate local:MainPage}"
+        Route="MainPage" />
+
+    <ShellContent
+        Title="Studenti"
+        ContentTemplate="{DataTemplate views:StudentsPage}"
+        Route="StudentsPage" />
+
+    <ShellContent
+        Title="Uzdevumi"
+        ContentTemplate="{DataTemplate views:AssignmentsPage}"
+        Route="AssignmentsPage" />
+
+    <ShellContent
+        Title="Iesniegumi"
+        ContentTemplate="{DataTemplate views:SubmissionsPage}"
+        Route="SubmissionsPage" />
+
+    <ShellContent
+        Title="Kursi"
+        ContentTemplate="{DataTemplate views:CoursePage}"
+        Route="CoursePage" />
+
+    <ShellContent
+        Title="Pasniedzēji"
+        ContentTemplate="{DataTemplate views:TeachersPage}"
+        Route="TeachersPage" />
+
+</Shell>
