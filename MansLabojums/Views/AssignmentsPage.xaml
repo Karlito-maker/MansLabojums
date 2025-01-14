@@ -1,36 +1,53 @@
 ﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:MansLabojums.ViewModels"
              x:Class="MansLabojums.Views.AssignmentsPage"
-             Title="Uzdevumi">
+             Title="{Binding Title}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="10">
+    <ContentPage.BindingContext>
+        <viewmodels:AssignmentsViewModel />
+    </ContentPage.BindingContext>
 
-            <Label Text="Uzdevumu saraksts"
-                   FontSize="24"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center" />
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Style x:Key="ButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#6200EE" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="50" />
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
-            <ListView x:Name="AssignmentsListView"
-                      SelectedItem="None"
-                      ItemSelected="OnAssignmentSelected">
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <TextCell Text="{Binding Description}"
-                                  Detail="{Binding CourseName}" />
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
+    <StackLayout Padding="20" Spacing="10">
+        <Button Text="Pievienot uzdevumu" 
+                Command="{Binding AddCommand}" 
+                Style="{StaticResource ButtonStyle}" />
 
-            <HorizontalStackLayout Spacing="10">
-                <Button Text="Pievienot" Clicked="OnAddAssignmentClicked" />
-                <Button Text="Rediģēt" Clicked="OnEditAssignmentClicked" />
-                <Button Text="Dzēst" Clicked="OnDeleteAssignmentClicked" />
-            </HorizontalStackLayout>
-
-            <Button Text="Filtrēt pēc kursa" Clicked="OnFilterByCourseClicked" />
-
-        </VerticalStackLayout>
-    </ScrollView>
-
+        <CollectionView ItemsSource="{Binding Assignments}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Execute">
+                                <SwipeItem Text="Labot"
+                                           BackgroundColor="LightGreen"
+                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:AssignmentsViewModel}}, Path=EditCommand}"
+                                           CommandParameter="{Binding .}" />
+                                <SwipeItem Text="Dzēst"
+                                           BackgroundColor="Red"
+                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:AssignmentsViewModel}}, Path=DeleteCommand}"
+                                           CommandParameter="{Binding .}" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+                        <Grid Padding="10">
+                            <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" />
+                            <Label Text="{Binding Description}" FontSize="14" TextColor="Gray" />
+                        </Grid>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </StackLayout>
 </ContentPage>
