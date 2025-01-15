@@ -1,115 +1,88 @@
 ﻿using Microsoft.Maui.Controls;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using MansLabojums.Models;
 using MansLabojums.Helpers;
-using System;
-using System.Collections.Generic;
 
 namespace MansLabojums.Views
 {
     public partial class SubmissionsPage : ContentPage
     {
-        // Atļaujam selectedSubmission būt null, lai nav CS8618
-        private Dictionary<string, object>? selectedSubmission = null;
-
         public SubmissionsPage()
         {
             InitializeComponent();
-            LoadSubmissions();
+            BindingContext = new SubmissionsViewModel();
+        }
+    }
+
+    public class SubmissionsViewModel : BaseViewModel
+    {
+        public ObservableCollection<Submission> Submissions { get; set; }
+        public ICommand AddCommand { get; }
+        public ICommand EditCommand { get; }
+        public ICommand DeleteCommand { get; }
+        public ICommand GenerateTestDataCommand { get; }
+
+        public SubmissionsViewModel()
+        {
+            Title = "Iesniegumi";
+            Submissions = new ObservableCollection<Submission>();
+            AddCommand = new Command(async () => await AddSubmission());
+            EditCommand = new Command<Submission>(async (submission) => await EditSubmission(submission));
+            DeleteCommand = new Command<Submission>(async (submission) => await DeleteSubmission(submission));
+            GenerateTestDataCommand = new Command(async () => await GenerateTestData());
+
+            LoadSubmissions().ConfigureAwait(false);
         }
 
-        private void LoadSubmissions()
+        async Task LoadSubmissions()
         {
-            try
+            var submissions = await DatabaseHelper.GetSubmissionsAsync();
+            Submissions.Clear();
+            foreach (var submission in submissions)
             {
-                var subs = DatabaseHelper.GetSubmissions();
-                SubmissionsListView.ItemsSource = subs;
-            }
-            catch (Exception ex)
-            {
-                DisplayAlert("Kļūda", ex.Message, "Labi");
-            }
-        }
-
-        private void OnSubmissionSelected(object sender, SelectedItemChangedEventArgs e)
-        {
-            selectedSubmission = e.SelectedItem as Dictionary<string, object>;
-        }
-
-        private async void OnAddSubmissionClicked(object sender, EventArgs e)
-        {
-            string assignmentDescription = await DisplayPromptAsync("Pievienot iesniegumu", "Uzdevuma apraksts:");
-            if (string.IsNullOrEmpty(assignmentDescription)) return;
-
-            string studentName = await DisplayPromptAsync("Pievienot iesniegumu", "Studenta vārds:");
-            if (string.IsNullOrEmpty(studentName)) return;
-
-            string scoreStr = await DisplayPromptAsync("Pievienot iesniegumu", "Ievadiet rezultātu:");
-            if (!int.TryParse(scoreStr, out int score))
-            {
-                await DisplayAlert("Kļūda", "Nepareizs skaitlis!", "Labi");
-                return;
-            }
-
-            try
-            {
-                DatabaseHelper.AddSubmission(assignmentDescription, studentName, score);
-                LoadSubmissions();
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlert("Kļūda", ex.Message, "Labi");
+                Submissions.Add(submission);
             }
         }
 
-        private async void OnEditSubmissionClicked(object sender, EventArgs e)
+        async Task AddSubmission()
         {
-            if (selectedSubmission == null)
-            {
-                await DisplayAlert("Brīdinājums", "Nav izvēlēts neviens iesniegums.", "Labi");
-                return;
-            }
-
-            int submissionId = (int)selectedSubmission["Id"];
-            string oldScore = selectedSubmission["Score"].ToString();
-
-            string newScoreStr = await DisplayPromptAsync("Labot iesniegumu", "Jauns rezultāts:", initialValue: oldScore);
-            if (!int.TryParse(newScoreStr, out int newScore))
-            {
-                await DisplayAlert("Kļūda", "Nepareizs skaitlis!", "Labi");
-                return;
-            }
-
-            try
-            {
-                DatabaseHelper.UpdateSubmission(submissionId, newScore);
-                LoadSubmissions();
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlert("Kļūda", ex.Message, "Labi");
-            }
+            var submission = new Submission();
+            // Here you can implement a modal page to get user input
+            // await App.Current.MainPage.Navigation.PushAsync(new SubmissionDetailPage(submission));
+            await LoadSubmissions();
         }
 
-        private async void OnDeleteSubmissionClicked(object sender, EventArgs e)
+        async Task EditSubmission(Submission submission)
         {
-            if (selectedSubmission == null)
-            {
-                await DisplayAlert("Brīdinājums", "Nav izvēlēts neviens iesniegums.", "Labi");
-                return;
-            }
+            // Open the detail page for editing
+            // await App.Current.MainPage.Navigation.PushAsync(new SubmissionDetailPage(submission));
+            await LoadSubmissions();
+        }
 
-            int submissionId = (int)selectedSubmission["Id"];
-            bool confirm = await DisplayAlert("Dzēst iesniegumu", "Vai tiešām vēlaties dzēst šo iesniegumu?", "Jā", "Nē");
-            if (!confirm) return;
+        async Task DeleteSubmission(Submission submission)
+        {
+            await DatabaseHelper.DeleteSubmissionAsync(submission);
+            Submissions.Remove(submission);
+        }
 
-            try
+        async Task GenerateTestData()
+        {
+            var testSubmissions = new List<Submission>
             {
-                DatabaseHelper.DeleteSubmission(submissionId);
-                LoadSubmissions();
-            }
-            catch (Exception ex)
+                new Submission { AssignmentId = 1, StudentId = 1, Content = "Submission 1" },
+                new Submission { AssignmentId = 2, StudentId = 2, Content = "Submission 2" },
+                new Submission { AssignmentId = 3, StudentId = 3, Content = "Submission 3" },
+            };
+
+            foreach (var submission in testSubmissions)
             {
-                await DisplayAlert("Kļūda", ex.Message, "Labi");
+                await DatabaseHelper.SaveSubmissionAsync(submission);
+                Submissions.Add(submission);
             }
         }
     }
 }
+
+

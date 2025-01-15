@@ -1,6 +1,6 @@
 ﻿using Microsoft.Maui.Controls;
 using MansLabojums.Helpers;
-using System;
+using System.Threading.Tasks;
 
 namespace MansLabojums
 {
@@ -13,53 +13,60 @@ namespace MansLabojums
 
         private async void OnInitDbClicked(object sender, EventArgs e)
         {
-            try
-            {
-                DatabaseHelper.InitializeDatabase();
-                await DisplayAlert("Info", "Datubāze inicializēta veiksmīgi!", "OK");
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlert("Kļūda", ex.Message, "Labi");
-            }
+            await InitializeDatabaseAsync();
         }
 
         private async void OnSeedDataClicked(object sender, EventArgs e)
         {
-            try
-            {
-                DatabaseHelper.SeedData();
-                await DisplayAlert("Info", "Testa dati pievienoti.", "OK");
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlert("Kļūda", ex.Message, "Labi");
-            }
+            await SeedDataAsync();
         }
 
-        private void NavigateToStudentsPage(object sender, EventArgs e)
+        private async void NavigateToStudentsPage(object sender, EventArgs e)
         {
-            Shell.Current.GoToAsync("//StudentsPage");
+            await Shell.Current.GoToAsync(nameof(Views.StudentsPage));
         }
 
-        private void NavigateToAssignmentsPage(object sender, EventArgs e)
+        private async void NavigateToAssignmentsPage(object sender, EventArgs e)
         {
-            Shell.Current.GoToAsync("//AssignmentsPage");
+            await Shell.Current.GoToAsync(nameof(Views.AssignmentsPage));
         }
 
-        private void NavigateToSubmissionsPage(object sender, EventArgs e)
+        private async void NavigateToSubmissionsPage(object sender, EventArgs e)
         {
-            Shell.Current.GoToAsync("//SubmissionsPage");
+            await Shell.Current.GoToAsync(nameof(Views.SubmissionsPage));
         }
 
-        private void NavigateToCoursesPage(object sender, EventArgs e)
+        private async void NavigateToCoursesPage(object sender, EventArgs e)
         {
-            Shell.Current.GoToAsync("//CoursePage");
+            await Shell.Current.GoToAsync(nameof(Views.CoursePage));
         }
 
-        private void NavigateToTeachersPage(object sender, EventArgs e)
+        private async void NavigateToTeachersPage(object sender, EventArgs e)
         {
-            Shell.Current.GoToAsync("//TeachersPage");
+            await Shell.Current.GoToAsync(nameof(Views.TeachersPage));
+        }
+
+        private async Task InitializeDatabaseAsync()
+        {
+            await DatabaseHelper.InitializeDatabase();
+            await DisplayAlert("Datubāze", "Datubāze inicializēta veiksmīgi!", "OK");
+        }
+
+        private async Task SeedDataAsync()
+        {
+            await DatabaseHelper.SeedDataAsync();
+            await DisplayAlert("Testa dati", "Testa dati ievadīti veiksmīgi!", "OK");
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+

@@ -1,7 +1,21 @@
-﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MansLabojums.MainPage"
              Title="Sākumlapa">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Style x:Key="ButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#6200EE" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="50" />
+                <Setter Property="Margin" Value="0,10,0,0" />
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="20">
@@ -12,27 +26,41 @@
                    HorizontalOptions="Center" />
 
             <Button Text="Inicializēt datubāzi"
-                    Clicked="OnInitDbClicked" />
+                    Clicked="OnInitDbClicked"
+                    Style="{StaticResource ButtonStyle}" />
 
             <Button Text="Ievadīt testa datus"
-                    Clicked="OnSeedDataClicked" />
+                    Clicked="OnSeedDataClicked"
+                    Style="{StaticResource ButtonStyle}" />
 
             <Button Text="Studenti"
-                    Clicked="NavigateToStudentsPage" />
+                    Clicked="NavigateToStudentsPage"
+                    Style="{StaticResource ButtonStyle}" />
 
             <Button Text="Uzdevumi"
-                    Clicked="NavigateToAssignmentsPage" />
+                    Clicked="NavigateToAssignmentsPage"
+                    Style="{StaticResource ButtonStyle}" />
 
             <Button Text="Iesniegumi"
-                    Clicked="NavigateToSubmissionsPage" />
+                    Clicked="NavigateToSubmissionsPage"
+                    Style="{StaticResource ButtonStyle}" />
 
             <Button Text="Kursi"
-                    Clicked="NavigateToCoursesPage" />
+                    Clicked="NavigateToCoursesPage"
+                    Style="{StaticResource ButtonStyle}" />
 
             <Button Text="Pasniedzēji"
-                    Clicked="NavigateToTeachersPage" />
+                    Clicked="NavigateToTeachersPage"
+                    Style="{StaticResource ButtonStyle}" />
 
         </VerticalStackLayout>
     </ScrollView>
 
 </ContentPage>
+
+
+
+
+
+
+

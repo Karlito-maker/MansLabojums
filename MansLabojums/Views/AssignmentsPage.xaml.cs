@@ -1,17 +1,28 @@
-﻿using System.Collections.ObjectModel;
+﻿using Microsoft.Maui.Controls;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using MansLabojums.Models;
-using Microsoft.Maui.Controls;
+using MansLabojums.Helpers;
 
-namespace MansLabojums.ViewModels
+namespace MansLabojums.Views
 {
+    public partial class AssignmentsPage : ContentPage
+    {
+        public AssignmentsPage()
+        {
+            InitializeComponent();
+            BindingContext = new AssignmentsViewModel();
+        }
+    }
+
     public class AssignmentsViewModel : BaseViewModel
     {
         public ObservableCollection<Assignment> Assignments { get; set; }
         public ICommand AddCommand { get; }
         public ICommand EditCommand { get; }
         public ICommand DeleteCommand { get; }
+        public ICommand GenerateTestDataCommand { get; }
 
         public AssignmentsViewModel()
         {
@@ -20,13 +31,14 @@ namespace MansLabojums.ViewModels
             AddCommand = new Command(async () => await AddAssignment());
             EditCommand = new Command<Assignment>(async (assignment) => await EditAssignment(assignment));
             DeleteCommand = new Command<Assignment>(async (assignment) => await DeleteAssignment(assignment));
+            GenerateTestDataCommand = new Command(async () => await GenerateTestData());
 
-            LoadAssignments();
+            LoadAssignments().ConfigureAwait(false);
         }
 
-        async void LoadAssignments()
+        async Task LoadAssignments()
         {
-            var assignments = await App.Database.GetAssignmentsAsync();
+            var assignments = await DatabaseHelper.GetAssignmentsAsync();
             Assignments.Clear();
             foreach (var assignment in assignments)
             {
@@ -36,24 +48,41 @@ namespace MansLabojums.ViewModels
 
         async Task AddAssignment()
         {
-            // Šeit var pievienot logiku, lai saņemtu lietotāja ievadi caur dialogu
-            var newAssignment = new Assignment { Name = "Jauns uzdevums", Description = "Apraksts" };
-            await App.Database.SaveAssignmentAsync(newAssignment);
-            Assignments.Add(newAssignment);
+            var assignment = new Assignment();
+            // Here you can implement a modal page to get user input
+            // await App.Current.MainPage.Navigation.PushAsync(new AssignmentDetailPage(assignment));
+            await LoadAssignments();
         }
 
         async Task EditAssignment(Assignment assignment)
         {
-            // Šeit var pievienot logiku uzdevuma labošanai
-            assignment.Name = "Atjaunināts uzdevums";
-            await App.Database.SaveAssignmentAsync(assignment);
-            LoadAssignments();
+            // Open the detail page for editing
+            // await App.Current.MainPage.Navigation.PushAsync(new AssignmentDetailPage(assignment));
+            await LoadAssignments();
         }
 
         async Task DeleteAssignment(Assignment assignment)
         {
-            await App.Database.DeleteAssignmentAsync(assignment);
+            await DatabaseHelper.DeleteAssignmentAsync(assignment);
             Assignments.Remove(assignment);
+        }
+
+        async Task GenerateTestData()
+        {
+            var testAssignments = new List<Assignment>
+            {
+                new Assignment { Name = "Test Assignment 1", Description = "Description 1" },
+                new Assignment { Name = "Test Assignment 2", Description = "Description 2" },
+                new Assignment { Name = "Test Assignment 3", Description = "Description 3" },
+            };
+
+            foreach (var assignment in testAssignments)
+            {
+                await DatabaseHelper.SaveAssignmentAsync(assignment);
+                Assignments.Add(assignment);
+            }
         }
     }
 }
+
+

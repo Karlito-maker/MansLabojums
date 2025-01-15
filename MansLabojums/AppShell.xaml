@@ -1,23 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:local="clr-namespace:MansLabojums"
        xmlns:views="clr-namespace:MansLabojums.Views"
        x:Class="MansLabojums.AppShell">
 
-    <TabBar>
-        <Tab Title="Uzdevumi" Icon="assignments.png">
-            <ShellContent ContentTemplate="{DataTemplate views:AssignmentsPage}" />
-        </Tab>
-        <Tab Title="Pasniedzēji" Icon="teachers.png">
-            <ShellContent ContentTemplate="{DataTemplate views:TeachersPage}" />
-        </Tab>
-        <Tab Title="Studenti" Icon="students.png">
-            <ShellContent ContentTemplate="{DataTemplate views:StudentsPage}" />
-        </Tab>
-        <Tab Title="Kursi" Icon="courses.png">
-            <ShellContent ContentTemplate="{DataTemplate views:CoursesPage}" />
-        </Tab>
-        <Tab Title="Iesniegumi" Icon="submissions.png">
-            <ShellContent ContentTemplate="{DataTemplate views:SubmissionsPage}" />
-        </Tab>
-    </TabBar>
+    <!-- Define your shell structure here -->
+    <FlyoutItem Title="Main Page" Icon="icon.png">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Students" Icon="icon.png">
+        <ShellContent ContentTemplate="{DataTemplate views:StudentsPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Assignments" Icon="icon.png">
+        <ShellContent ContentTemplate="{DataTemplate views:AssignmentsPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Submissions" Icon="icon.png">
+        <ShellContent ContentTemplate="{DataTemplate views:SubmissionsPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Courses" Icon="icon.png">
+        <ShellContent ContentTemplate="{DataTemplate views:CoursePage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Teachers" Icon="icon.png">
+        <ShellContent ContentTemplate="{DataTemplate views:TeachersPage}" />
+    </FlyoutItem>
+
 </Shell>
+
+
+
+
+
+
+
+
+
+

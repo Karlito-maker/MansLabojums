@@ -1,12 +1,9 @@
-﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewmodels="clr-namespace:MansLabojums.ViewModels"
-             x:Class="MansLabojums.Views.CoursesPage"
-             Title="{Binding Title}">
-
-    <ContentPage.BindingContext>
-        <viewmodels:CoursesViewModel />
-    </ContentPage.BindingContext>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="MansLabojums.Views.CoursePage"
+    Title="{Binding Title}">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -20,12 +17,22 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <StackLayout Padding="20" Spacing="10">
-        <Button Text="Pievienot kursu" 
-                Command="{Binding AddCommand}" 
-                Style="{StaticResource ButtonStyle}" />
+    <Grid Padding="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <CollectionView ItemsSource="{Binding Courses}">
+        <StackLayout Orientation="Horizontal" Grid.Row="0" Spacing="10">
+            <Button Text="Pievienot"
+                    Command="{Binding AddCommand}"
+                    Style="{StaticResource ButtonStyle}" />
+            <Button Text="Testa dati"
+                    Command="{Binding GenerateTestDataCommand}"
+                    Style="{StaticResource ButtonStyle}" />
+        </StackLayout>
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Courses}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <SwipeView>
@@ -33,21 +40,22 @@
                             <SwipeItems Mode="Execute">
                                 <SwipeItem Text="Labot"
                                            BackgroundColor="LightGreen"
-                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CoursesViewModel}}, Path=EditCommand}"
+                                           Command="{Binding BindingContext.EditCommand, Source={x:Reference Name=CoursePage}}"
                                            CommandParameter="{Binding .}" />
                                 <SwipeItem Text="Dzēst"
                                            BackgroundColor="Red"
-                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CoursesViewModel}}, Path=DeleteCommand}"
+                                           Command="{Binding BindingContext.DeleteCommand, Source={x:Reference Name=CoursePage}}"
                                            CommandParameter="{Binding .}" />
                             </SwipeItems>
                         </SwipeView.RightItems>
                         <Grid Padding="10">
                             <Label Text="{Binding CourseName}" FontSize="18" FontAttributes="Bold" />
-                            <Label Text="Pasniedzēja ID: {Binding TeacherId}" FontSize="14" TextColor="Gray" />
+                            <Label Text="{Binding TeacherId}" FontSize="14" TextColor="Gray" />
                         </Grid>
                     </SwipeView>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-    </StackLayout>
+    </Grid>
 </ContentPage>
+

@@ -1,30 +1,24 @@
-﻿using System.IO;
+﻿using Microsoft.Maui;
 using Microsoft.Maui.Controls;
-using MansLabojums.Services;
+using Microsoft.Maui.Controls.Xaml;
+using MansLabojums.Helpers;
 
 namespace MansLabojums
 {
     public partial class App : Application
     {
-        private static DatabaseService _database;
-
-        public static DatabaseService Database
-        {
-            get
-            {
-                if (_database == null)
-                {
-                    var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MansLabojums.db3");
-                    _database = new DatabaseService(dbPath);
-                }
-                return _database;
-            }
-        }
+        public static DbContext DbContext { get; private set; } = null!;
 
         public App()
         {
             InitializeComponent();
-            MainPage = new AppShell();
+            DbContext = new DbContext();
+        }
+
+        protected override Window CreateWindow(IActivationState? activationState)
+        {
+            var window = new Window(new MainPage());
+            return window;
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using SQLite;
+﻿using SQLite;
 
 namespace MansLabojums.Models
 {
@@ -7,7 +6,11 @@ namespace MansLabojums.Models
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Subject { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Subject { get; set; } = string.Empty;
     }
 }
+
+
+
+
