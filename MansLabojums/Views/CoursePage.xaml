@@ -5,78 +5,61 @@
              Title="Kursi">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="10">
+        <VerticalStackLayout Padding="20" Spacing="12">
 
             <Label Text="Kursu saraksts"
                    FontSize="24"
                    FontAttributes="Bold"
                    HorizontalOptions="Center" />
 
-            <!-- Esošo kursu saraksts -->
             <ListView x:Name="CoursesListView"
                       SelectionMode="Single"
+                      ItemSelected="OnCourseSelected"
                       HeightRequest="200">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <ViewCell>
-                            <StackLayout Padding="5">
-                                <!-- Rādām 'CourseName' un 'TeacherName' -->
-                                <Label Text="{Binding CourseName}"
-                                       FontAttributes="Bold" />
-                                <Label Text="{Binding TeacherName}"
-                                       FontAttributes="Italic"
-                                       FontSize="12" />
-                            </StackLayout>
-                        </ViewCell>
+                        <TextCell Text="{Binding CourseLabel}"
+                                  Detail="{Binding TeacherLabel}" />
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
 
-            <!-- Pievienot jaunu kursu -->
+            <HorizontalStackLayout Spacing="10">
+                <Button Text="Labot"
+                        Clicked="OnEditCourseClicked"
+                        x:Name="EditButton"
+                        IsEnabled="False"/>
+                <Button Text="Dzēst"
+                        Clicked="OnDeleteCourseClicked"
+                        x:Name="DeleteButton"
+                        IsEnabled="False"/>
+            </HorizontalStackLayout>
+
+            <!-- Pievienot kursu -->
             <Frame BackgroundColor="#eeeeee" Padding="10">
                 <VerticalStackLayout Spacing="6">
-                    <Label Text="Pievienot jaunu kursu" 
+                    <Label Text="Pievienot kursu"
                            FontAttributes="Bold"
                            HorizontalOptions="Center" />
 
-                    <!-- Ievadlauciņš kursa nosaukumam -->
-                    <HorizontalStackLayout>
-                        <Label Text="Kursa nosaukums:" 
-                               VerticalTextAlignment="Center"
-                               WidthRequest="120"/>
-                        <Entry x:Name="CourseNameEntry"
-                               Placeholder="Piemēram: Ķīmija"
-                               HorizontalOptions="FillAndExpand" />
-                    </HorizontalStackLayout>
+                    <Entry x:Name="CourseNameEntry"
+                           Placeholder="Kursa nosaukums" />
 
-                    <!-- Picker skolotāja izvēlei -->
-                    <HorizontalStackLayout>
-                        <Label Text="Skolotājs:" 
-                               VerticalTextAlignment="Center"
-                               WidthRequest="120"/>
-                        <Picker x:Name="TeacherPicker"
-                                Title="Izvēlieties skolotāju"
-                                HorizontalOptions="FillAndExpand"
-                                ItemsSource="{Binding TeacherList}"
-                                ItemDisplayBinding="{Binding FullName}"
-                                SelectedItem="{Binding SelectedTeacher}" />
-                    </HorizontalStackLayout>
+                    <!-- Skolotāja dropdown -->
+                    <Picker x:Name="TeacherPicker"
+                            Title="Izvēlieties skolotāju"
+                            ItemsSource="{Binding TeacherList}"
+                            ItemDisplayBinding="{Binding TeacherFullName}"
+                            SelectedItem="{Binding SelectedTeacher}" />
 
-                    <!-- Pievienot poga -->
-                    <Button Text="Pievienot kursu"
-                            Clicked="OnAddCourseClicked"
-                            BackgroundColor="#cccccc" 
-                            CornerRadius="6"/>
+                    <HorizontalStackLayout Spacing="10">
+                        <Button Text="Pievienot"
+                                Clicked="OnAddCourseClicked" />
+                        <Button Text="Cancel"
+                                Clicked="OnCancelAddClicked" />
+                    </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Frame>
-
-            <!-- Pogas Labot/Dzēst -->
-            <HorizontalStackLayout Spacing="10">
-                <Button Text="Labot"
-                        Clicked="OnEditCourseClicked"/>
-                <Button Text="Dzēst"
-                        Clicked="OnDeleteCourseClicked"/>
-            </HorizontalStackLayout>
 
         </VerticalStackLayout>
     </ScrollView>

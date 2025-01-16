@@ -5,38 +5,71 @@
              Title="Studenti">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="10">
+        <VerticalStackLayout Padding="20" Spacing="12">
 
             <Label Text="Studentu saraksts"
                    FontSize="24"
                    FontAttributes="Bold"
                    HorizontalOptions="Center" />
 
-            <!-- Saraksts -->
             <ListView x:Name="StudentsListView"
-                      SelectionMode="Single">
+                      SelectionMode="Single"
+                      ItemSelected="OnStudentSelected"
+                      HeightRequest="200">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <!-- Rādām studenta vārdu + uzvārdu, un StudentIdNumber -->
                         <TextCell Text="{Binding FullName}"
-                                  Detail="{Binding StudentIdNumberStr}" />
+                                  Detail="{Binding IdNumberText}" />
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
 
-            <!-- CRUD pogas -->
+            <!-- CRUD pogas (labot/dzēst) -->
             <HorizontalStackLayout Spacing="10">
-                <Button Text="Pievienot"
-                        Clicked="OnAddStudentClicked"/>
                 <Button Text="Labot"
-                        Clicked="OnEditStudentClicked"/>
+                        Clicked="OnEditStudentClicked"
+                        x:Name="EditButton"
+                        IsEnabled="False" />
                 <Button Text="Dzēst"
-                        Clicked="OnDeleteStudentClicked"/>
+                        Clicked="OnDeleteStudentClicked"
+                        x:Name="DeleteButton"
+                        IsEnabled="False" />
             </HorizontalStackLayout>
+
+            <!-- Pievienošanas forma ar Cancel -->
+            <Frame BackgroundColor="#eeeeee" Padding="10">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Pievienot studentu"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center" />
+
+                    <Entry x:Name="NameEntry"
+                           Placeholder="Vārds" />
+                    <Entry x:Name="SurnameEntry"
+                           Placeholder="Uzvārds" />
+                    <Picker x:Name="GenderPicker"
+                            Title="Dzimums">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>Male</x:String>
+                                <x:String>Female</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+                    <Entry x:Name="IdNumberEntry"
+                           Placeholder="StudentIdNumber"
+                           Keyboard="Numeric"/>
+
+                    <HorizontalStackLayout Spacing="10">
+                        <Button Text="Pievienot" 
+                                Clicked="OnAddStudentClicked" />
+                        <Button Text="Cancel"
+                                Clicked="OnCancelAddClicked" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
 
         </VerticalStackLayout>
     </ScrollView>
 
 </ContentPage>
-
-

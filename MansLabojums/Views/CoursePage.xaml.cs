@@ -1,8 +1,4 @@
-﻿/******************************************************
- * MansLabojums/Views/CoursesPage.xaml.cs
- * Kur var pievienot kursu ar skolotāja izvēli Picker
- ******************************************************/
-using MansLabojums.Helpers;
+﻿using MansLabojums.Helpers;
 using Microsoft.Maui.Controls;
 using System;
 using System.Collections.ObjectModel;
@@ -12,36 +8,32 @@ namespace MansLabojums.Views
 {
     public partial class CoursesPage : ContentPage
     {
-        // Klase, ko rādam sarakstā
+        // Rādām sarakstā
         public class CourseDisplay
         {
             public int Id { get; set; }
-            public string CourseName { get; set; } = "";
-            public string TeacherName { get; set; } = "";
+            public string CourseLabel { get; set; } = "";
+            public string TeacherLabel { get; set; } = "";
         }
 
-        // Skolotāja modelis lai `Picker` rādītu vārdu + uzvārdu
+        // Skolotāju dropdown 
         public class TeacherItem
         {
             public int Id { get; set; }
-            public string FullName { get; set; } = "";
+            public string TeacherFullName { get; set; } = "";
         }
 
-        // Observables
         private ObservableCollection<CourseDisplay> _courses = new();
-        public ObservableCollection<TeacherItem> TeacherList { get; set; } = new();
+        private CourseDisplay _selected;
 
-        // Picker atlase
+        public ObservableCollection<TeacherItem> TeacherList { get; set; } = new();
         public TeacherItem SelectedTeacher { get; set; }
 
         public CoursesPage()
         {
             InitializeComponent();
-
-            // Piesaistām kontekstu, lai var lietot TeacherPicker binding
-            BindingContext = this;
-
             CoursesListView.ItemsSource = _courses;
+            BindingContext = this;
         }
 
         protected override void OnAppearing()
@@ -54,16 +46,22 @@ namespace MansLabojums.Views
         private void LoadCourses()
         {
             _courses.Clear();
-            var list = DatabaseHelper.GetCoursesWithTeacherName();
-            // sagaidām "Id", "CourseName", "TeacherName"
+            _selected = null;
+            EditButton.IsEnabled = false;
+            DeleteButton.IsEnabled = false;
 
+            var list = DatabaseHelper.GetCoursesWithTeacherName();
+            // sagaidām  "Id", "CourseName", "TeacherName"
             foreach (var row in list)
             {
+                int cid = (int)row["Id"];
+                string cname = row["CourseName"].ToString()!;
+                string tname = row["TeacherName"].ToString()!;
                 _courses.Add(new CourseDisplay
                 {
-                    Id = (int)row["Id"],
-                    CourseName = row["CourseName"].ToString()!,
-                    TeacherName = row["TeacherName"].ToString()!
+                    Id = cid,
+                    CourseLabel = $"[{cid}] {cname}",
+                    TeacherLabel = $"Pasniedz: {tname}"
                 });
             }
         }
@@ -72,84 +70,113 @@ namespace MansLabojums.Views
         {
             TeacherList.Clear();
             var teachers = DatabaseHelper.GetTeachers();
-            // atgriež List<Teacher>
             foreach (var t in teachers)
             {
                 TeacherList.Add(new TeacherItem
                 {
                     Id = t.Id,
-                    FullName = $"{t.Name} {t.Surname}"
+                    TeacherFullName = $"{t.Name} {t.Surname}"
                 });
             }
         }
 
+        private void OnCourseSelected(object sender, SelectedItemChangedEventArgs e)
+        {
+            _selected = (CourseDisplay)e.SelectedItem;
+            bool hasSel = (_selected != null);
+            EditButton.IsEnabled = hasSel;
+            DeleteButton.IsEnabled = hasSel;
+        }
+
         private void OnAddCourseClicked(object sender, EventArgs e)
         {
-            // Paņemam ierakstīto kursa nosaukumu
-            string cName = CourseNameEntry.Text?.Trim();
-            // Paņemam atlasīto teacher
-            var teacher = SelectedTeacher;
-
-            if (string.IsNullOrEmpty(cName) || teacher == null)
+            string cname = CourseNameEntry.Text?.Trim();
+            if (SelectedTeacher == null)
             {
-                DisplayAlert("Kļūda", "Lūdzu ievadiet kursa nosaukumu un izvēlieties skolotāju!", "OK");
+                DisplayAlert("Kļūda", "Izvēlieties skolotāju!", "OK");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(cname))
+            {
+                DisplayAlert("Kļūda", "Nav kursa nosaukums!", "OK");
                 return;
             }
 
             try
             {
-                DatabaseHelper.AddCourse(cName, teacher.Id);
+                DatabaseHelper.AddCourse(cname, SelectedTeacher.Id);
+                ClearAddForm();
                 LoadCourses();
-
-                // Iztīrām ievadlauku un nullejam atlasīto skolotāju
-                CourseNameEntry.Text = "";
-                SelectedTeacher = null;
-                TeacherPicker.SelectedItem = null;
             }
             catch (Exception ex)
             {
-                DisplayAlert("Kļūda", $"Neizdevās pievienot kursu: {ex.Message}", "OK");
+                DisplayAlert("Kļūda", ex.Message, "OK");
             }
+        }
+
+        private void ClearAddForm()
+        {
+            CourseNameEntry.Text = "";
+            SelectedTeacher = null;
+            TeacherPicker.SelectedItem = null;
+        }
+
+        private void OnCancelAddClicked(object sender, EventArgs e)
+        {
+            ClearAddForm();
         }
 
         private async void OnEditCourseClicked(object sender, EventArgs e)
         {
-            if (CoursesListView.SelectedItem is CourseDisplay selC)
-            {
-                // var ierosināt jauno nosaukumu
-                string newName = await DisplayPromptAsync("Labot kursu", "Jauns nosaukums:", initialValue: selC.CourseName);
-                // Piemēram, var arī vienkārši lūgt jaunam teacherId. 
-                // Uz doto brīdi parādām prompt
-                string newTidStr = await DisplayPromptAsync("Labot kursu", "Jauns TeacherId:", initialValue: "1");
+            if (_selected == null) return;
 
-                if (!string.IsNullOrEmpty(newName) && int.TryParse(newTidStr, out int newTid))
+            // Iegūstam ID=??, ierosinām prompt
+            string oldTitle = _selected.CourseLabel; // "[2] Fizika"
+            string newName = await DisplayPromptAsync("Labot kursu", "Jauns nosaukums:", initialValue: oldTitle);
+
+            // Tagad teacher:
+            // var newTeacherId = ??  -> reāli var parādīt citu picker, bet vienkāršības labad => prompt
+            string newTStr = await DisplayPromptAsync("Labot kursu", "Jauns TeacherId:", initialValue: "1");
+
+            if (!string.IsNullOrEmpty(newName) && int.TryParse(newTStr, out int newTid))
+            {
+                // Izvelkam ID no oldTitle? 
+                // newName satur “[2] Fizika”, mēs gribam “Fizika”
+                int bracketPos = newName.IndexOf(']');
+                string pureName = (bracketPos >= 0 && bracketPos < newName.Length - 1)
+                                  ? newName.Substring(bracketPos + 1).Trim()
+                                  : newName;
+
+                try
                 {
-                    DatabaseHelper.UpdateCourse(selC.Id, newName, newTid);
+                    DatabaseHelper.UpdateCourse(_selected.Id, pureName, newTid);
                     LoadCourses();
                 }
-            }
-            else
-            {
-                await DisplayAlert("Brīdinājums", "Nav izvēlēts neviens kurss!", "OK");
+                catch (Exception ex)
+                {
+                    await DisplayAlert("Kļūda", ex.Message, "OK");
+                }
             }
         }
 
         private async void OnDeleteCourseClicked(object sender, EventArgs e)
         {
-            if (CoursesListView.SelectedItem is CourseDisplay selC)
+            if (_selected == null) return;
+
+            bool confirm = await DisplayAlert("Dzēst kursu?", _selected.CourseLabel, "Jā", "Nē");
+            if (confirm)
             {
-                bool confirm = await DisplayAlert("Dzēst kursu?", selC.CourseName, "Jā", "Nē");
-                if (confirm)
+                try
                 {
-                    DatabaseHelper.DeleteCourse(selC.Id);
+                    DatabaseHelper.DeleteCourse(_selected.Id);
                     LoadCourses();
                 }
-            }
-            else
-            {
-                await DisplayAlert("Brīdinājums", "Nav izvēlēts neviens kurss!", "OK");
+                catch (Exception ex)
+                {
+                    await DisplayAlert("Kļūda", ex.Message, "OK");
+                }
             }
         }
     }
 }
-

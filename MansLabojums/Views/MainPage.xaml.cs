@@ -1,7 +1,4 @@
-﻿/******************************************************
- * MansLabojums/Views/MainPage.xaml.cs
- ******************************************************/
-using MansLabojums.Helpers;
+﻿using MansLabojums.Helpers;
 using Microsoft.Maui.Controls;
 using System;
 
@@ -19,7 +16,7 @@ namespace MansLabojums.Views
             try
             {
                 DatabaseHelper.InitializeDatabase();
-                DisplayAlert("Info", "Datubāze inicializēta veiksmīgi!", "OK");
+                DisplayAlert("Info", "Datubāze inicializēta!", "OK");
             }
             catch (Exception ex)
             {
@@ -44,25 +41,22 @@ namespace MansLabojums.Views
         {
             Navigation.PushAsync(new StudentsPage());
         }
-
         private void NavigateToAssignmentsPage(object sender, EventArgs e)
         {
             Navigation.PushAsync(new AssignmentsPage());
         }
-
         private void NavigateToSubmissionsPage(object sender, EventArgs e)
         {
             Navigation.PushAsync(new SubmissionsPage());
         }
-
         private void NavigateToCoursesPage(object sender, EventArgs e)
         {
             Navigation.PushAsync(new CoursesPage());
         }
-
         private void NavigateToTeachersPage(object sender, EventArgs e)
         {
             Navigation.PushAsync(new TeachersPage());
         }
     }
 }
+

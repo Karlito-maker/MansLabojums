@@ -5,33 +5,61 @@
              Title="Uzdevumi">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="10">
-
+        <VerticalStackLayout Padding="20" Spacing="12">
             <Label Text="Uzdevumu saraksts"
                    FontSize="24"
                    FontAttributes="Bold"
                    HorizontalOptions="Center" />
 
             <ListView x:Name="AssignmentsListView"
-                      SelectionMode="Single">
+                      SelectionMode="Single"
+                      ItemSelected="OnAssignmentSelected"
+                      HeightRequest="200">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <!-- Rādām: Uzdevuma ID, Apraksts, Deadline (YYYY-MM-DD) -->
-                        <TextCell Text="{Binding DisplayTitle}"
-                                  Detail="{Binding DisplayDetail}" />
+                        <TextCell Text="{Binding TitleText}"
+                                  Detail="{Binding DetailText}" />
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
 
             <HorizontalStackLayout Spacing="10">
-                <Button Text="Pievienot"
-                        Clicked="OnAddAssignmentClicked"/>
                 <Button Text="Labot"
-                        Clicked="OnEditAssignmentClicked"/>
+                        Clicked="OnEditAssignmentClicked"
+                        x:Name="EditButton"
+                        IsEnabled="False" />
                 <Button Text="Dzēst"
-                        Clicked="OnDeleteAssignmentClicked"/>
+                        Clicked="OnDeleteAssignmentClicked"
+                        x:Name="DeleteButton"
+                        IsEnabled="False" />
             </HorizontalStackLayout>
 
+            <!-- Forma pievienot jaunu assignment -->
+            <Frame BackgroundColor="#eeeeee" Padding="10">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Pievienot uzdevumu"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center" />
+
+                    <Entry x:Name="DescriptionEntry"
+                           Placeholder="Uzdevuma apraksts" />
+                    <Entry x:Name="DeadlineEntry"
+                           Placeholder="Deadline (YYYY-MM-DD)"/>
+                    <!-- Kursa izvēle ar Picker -->
+                    <Picker x:Name="CoursePicker"
+                            Title="Izvēlieties kursu"
+                            ItemsSource="{Binding CourseList}"
+                            ItemDisplayBinding="{Binding CourseName}"
+                            SelectedItem="{Binding SelectedCourse}" />
+
+                    <HorizontalStackLayout Spacing="10">
+                        <Button Text="Pievienot" 
+                                Clicked="OnAddAssignmentClicked"/>
+                        <Button Text="Cancel"
+                                Clicked="OnCancelAddClicked"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
         </VerticalStackLayout>
     </ScrollView>
 
