@@ -1,38 +1,27 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<!-- MansLabojums/AppShell.xaml -->
 <Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-       xmlns:local="clr-namespace:MansLabojums"
        xmlns:views="clr-namespace:MansLabojums.Views"
        x:Class="MansLabojums.AppShell">
 
-    <!-- Define your shell structure here -->
-    <FlyoutItem Title="Main Page" Icon="icon.png">
-        <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
-    </FlyoutItem>
-    <FlyoutItem Title="Students" Icon="icon.png">
-        <ShellContent ContentTemplate="{DataTemplate views:StudentsPage}" />
-    </FlyoutItem>
-    <FlyoutItem Title="Assignments" Icon="icon.png">
-        <ShellContent ContentTemplate="{DataTemplate views:AssignmentsPage}" />
-    </FlyoutItem>
-    <FlyoutItem Title="Submissions" Icon="icon.png">
-        <ShellContent ContentTemplate="{DataTemplate views:SubmissionsPage}" />
-    </FlyoutItem>
-    <FlyoutItem Title="Courses" Icon="icon.png">
-        <ShellContent ContentTemplate="{DataTemplate views:CoursePage}" />
-    </FlyoutItem>
-    <FlyoutItem Title="Teachers" Icon="icon.png">
-        <ShellContent ContentTemplate="{DataTemplate views:TeachersPage}" />
-    </FlyoutItem>
+    <!-- Shell navigācija uz lapām -->
+    <ShellContent Title="Sākumlapa"
+                  ContentTemplate="{DataTemplate views:MainPage}"
+                  Route="MainPage"/>
+    <ShellContent Title="Studenti"
+                  ContentTemplate="{DataTemplate views:StudentsPage}"
+                  Route="StudentsPage"/>
+    <ShellContent Title="Uzdevumi"
+                  ContentTemplate="{DataTemplate views:AssignmentsPage}"
+                  Route="AssignmentsPage"/>
+    <ShellContent Title="Iesniegumi"
+                  ContentTemplate="{DataTemplate views:SubmissionsPage}"
+                  Route="SubmissionsPage"/>
+    <ShellContent Title="Kursi"
+                  ContentTemplate="{DataTemplate views:CoursesPage}"
+                  Route="CoursesPage"/>
+    <ShellContent Title="Pasniedzēji"
+                  ContentTemplate="{DataTemplate views:TeachersPage}"
+                  Route="TeachersPage"/>
 
 </Shell>
-
-
-
-
-
-
-
-
-
-

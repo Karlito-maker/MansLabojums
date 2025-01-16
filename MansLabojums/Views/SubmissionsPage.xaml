@@ -1,63 +1,88 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    x:Class="MansLabojums.Views.SubmissionsPage"
-    Title="{Binding Title}">
+﻿<!-- MansLabojums/Views/SubmissionsPage.xaml -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MansLabojums.Views.SubmissionsPage"
+             Title="Iesniegumi">
 
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <Style x:Key="ButtonStyle" TargetType="Button">
-                <Setter Property="BackgroundColor" Value="#6200EE" />
-                <Setter Property="TextColor" Value="White" />
-                <Setter Property="CornerRadius" Value="8" />
-                <Setter Property="FontSize" Value="16" />
-                <Setter Property="HeightRequest" Value="50" />
-            </Style>
-        </ResourceDictionary>
-    </ContentPage.Resources>
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="10">
 
-    <Grid Padding="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+            <Label Text="Iesniegumu saraksts"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
 
-        <StackLayout Orientation="Horizontal" Grid.Row="0" Spacing="10">
-            <Button Text="Pievienot"
-                    Command="{Binding AddCommand}"
-                    Style="{StaticResource ButtonStyle}" />
-            <Button Text="Testa dati"
-                    Command="{Binding GenerateTestDataCommand}"
-                    Style="{StaticResource ButtonStyle}" />
-        </StackLayout>
+            <!-- Esošo iesniegumu saraksts -->
+            <ListView x:Name="SubmissionsListView"
+                      SelectionMode="Single"
+                      HeightRequest="200">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextCell Text="{Binding DisplayTitle}"
+                                  Detail="{Binding DisplayDetail}" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
 
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Submissions}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <SwipeView>
-                        <SwipeView.RightItems>
-                            <SwipeItems Mode="Execute">
-                                <SwipeItem Text="Labot"
-                                           BackgroundColor="LightGreen"
-                                           Command="{Binding BindingContext.EditCommand, Source={x:Reference Name=SubmissionsPage}}"
-                                           CommandParameter="{Binding .}" />
-                                <SwipeItem Text="Dzēst"
-                                           BackgroundColor="Red"
-                                           Command="{Binding BindingContext.DeleteCommand, Source={x:Reference Name=SubmissionsPage}}"
-                                           CommandParameter="{Binding .}" />
-                            </SwipeItems>
-                        </SwipeView.RightItems>
-                        <Grid Padding="10">
-                            <Label Text="{Binding AssignmentId}" FontSize="18" FontAttributes="Bold" />
-                            <Label Text="{Binding StudentId}" FontSize="14" TextColor="Gray" />
-                            <Label Text="{Binding Content}" FontSize="14" TextColor="Gray" />
-                        </Grid>
-                    </SwipeView>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </Grid>
+            <!-- Form ielikt Submission pievienošanai -->
+            <Frame BackgroundColor="#eeeeee" Padding="10">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Pievienot jaunu iesniegumu"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center" />
+
+                    <!-- Uzdevuma (Assignment) Picker -->
+                    <HorizontalStackLayout>
+                        <Label Text="Uzdevums:" 
+                               VerticalTextAlignment="Center"
+                               WidthRequest="90"/>
+                        <Picker x:Name="AssignmentPicker"
+                                Title="Izvēlieties uzdevumu"
+                                ItemsSource="{Binding AssignmentList}"
+                                ItemDisplayBinding="{Binding AssignmentDesc}"
+                                SelectedItem="{Binding SelectedAssignment}"
+                                HorizontalOptions="FillAndExpand"/>
+                    </HorizontalStackLayout>
+
+                    <!-- Studenta (Student) Picker -->
+                    <HorizontalStackLayout>
+                        <Label Text="Students:"
+                               VerticalTextAlignment="Center"
+                               WidthRequest="90"/>
+                        <Picker x:Name="StudentPicker"
+                                Title="Izvēlieties studentu"
+                                ItemsSource="{Binding StudentList}"
+                                ItemDisplayBinding="{Binding StudentName}"
+                                SelectedItem="{Binding SelectedStudent}"
+                                HorizontalOptions="FillAndExpand"/>
+                    </HorizontalStackLayout>
+
+                    <!-- Score ievade -->
+                    <HorizontalStackLayout>
+                        <Label Text="Rezultāts:" 
+                               VerticalTextAlignment="Center"
+                               WidthRequest="90"/>
+                        <Entry x:Name="ScoreEntry"
+                               Keyboard="Numeric"
+                               HorizontalOptions="FillAndExpand"/>
+                    </HorizontalStackLayout>
+
+                    <Button Text="Pievienot iesniegumu"
+                            Clicked="OnAddSubmissionClicked"
+                            BackgroundColor="#cccccc" 
+                            CornerRadius="6"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Pogas Labot/Dzēst iesniegumu -->
+            <HorizontalStackLayout Spacing="10">
+                <Button Text="Labot"
+                        Clicked="OnEditSubmissionClicked"/>
+                <Button Text="Dzēst"
+                        Clicked="OnDeleteSubmissionClicked"/>
+            </HorizontalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
 </ContentPage>
-
-

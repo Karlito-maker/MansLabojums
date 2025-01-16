@@ -1,88 +1,140 @@
-﻿using Microsoft.Maui.Controls;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
-using System.Windows.Input;
+﻿/******************************************************
+ * MansLabojums/Views/AssignmentsPage.xaml.cs
+ ******************************************************/
 using MansLabojums.Models;
 using MansLabojums.Helpers;
+using Microsoft.Maui.Controls;
+using System;
+using System.Collections.ObjectModel;
 
 namespace MansLabojums.Views
 {
     public partial class AssignmentsPage : ContentPage
     {
+        // Vietējais “view model” sarakstam
+        public class AssignmentDisplay
+        {
+            public int Id { get; set; }
+            public string Description { get; set; } = "";
+            public DateTime Deadline { get; set; }
+            public int CourseId { get; set; }
+
+            public string DisplayTitle => $"ID: {Id}, {Description}";
+            public string DisplayDetail => $"Termiņš: {Deadline:yyyy-MM-dd}, CourseID={CourseId}";
+        }
+
+        private ObservableCollection<AssignmentDisplay> _assignments = new();
+
         public AssignmentsPage()
         {
             InitializeComponent();
-            BindingContext = new AssignmentsViewModel();
-        }
-    }
-
-    public class AssignmentsViewModel : BaseViewModel
-    {
-        public ObservableCollection<Assignment> Assignments { get; set; }
-        public ICommand AddCommand { get; }
-        public ICommand EditCommand { get; }
-        public ICommand DeleteCommand { get; }
-        public ICommand GenerateTestDataCommand { get; }
-
-        public AssignmentsViewModel()
-        {
-            Title = "Uzdevumi";
-            Assignments = new ObservableCollection<Assignment>();
-            AddCommand = new Command(async () => await AddAssignment());
-            EditCommand = new Command<Assignment>(async (assignment) => await EditAssignment(assignment));
-            DeleteCommand = new Command<Assignment>(async (assignment) => await DeleteAssignment(assignment));
-            GenerateTestDataCommand = new Command(async () => await GenerateTestData());
-
-            LoadAssignments().ConfigureAwait(false);
+            AssignmentsListView.ItemsSource = _assignments;
         }
 
-        async Task LoadAssignments()
+        protected override void OnAppearing()
         {
-            var assignments = await DatabaseHelper.GetAssignmentsAsync();
-            Assignments.Clear();
-            foreach (var assignment in assignments)
+            base.OnAppearing();
+            LoadAssignments();
+        }
+
+        private void LoadAssignments()
+        {
+            _assignments.Clear();
+
+            var list = DatabaseHelper.GetAssignments();
+            foreach (var a in list)
             {
-                Assignments.Add(assignment);
+                _assignments.Add(new AssignmentDisplay
+                {
+                    Id = a.Id,
+                    Description = a.Description,
+                    Deadline = a.Deadline,
+                    CourseId = a.CourseId
+                });
             }
         }
 
-        async Task AddAssignment()
+        private async void OnAddAssignmentClicked(object sender, EventArgs e)
         {
-            var assignment = new Assignment();
-            // Here you can implement a modal page to get user input
-            // await App.Current.MainPage.Navigation.PushAsync(new AssignmentDetailPage(assignment));
-            await LoadAssignments();
-        }
+            string desc = await DisplayPromptAsync("Jauns uzdevums", "Apraksts:");
+            string dlStr = await DisplayPromptAsync("Jauns uzdevums", "Deadline (YYYY-MM-DD):");
+            string cStr = await DisplayPromptAsync("Jauns uzdevums", "CourseId (skaitlis):");
 
-        async Task EditAssignment(Assignment assignment)
-        {
-            // Open the detail page for editing
-            // await App.Current.MainPage.Navigation.PushAsync(new AssignmentDetailPage(assignment));
-            await LoadAssignments();
-        }
-
-        async Task DeleteAssignment(Assignment assignment)
-        {
-            await DatabaseHelper.DeleteAssignmentAsync(assignment);
-            Assignments.Remove(assignment);
-        }
-
-        async Task GenerateTestData()
-        {
-            var testAssignments = new List<Assignment>
+            if (!string.IsNullOrEmpty(desc) &&
+                DateTime.TryParse(dlStr, out DateTime dl) &&
+                int.TryParse(cStr, out int cid))
             {
-                new Assignment { Name = "Test Assignment 1", Description = "Description 1" },
-                new Assignment { Name = "Test Assignment 2", Description = "Description 2" },
-                new Assignment { Name = "Test Assignment 3", Description = "Description 3" },
-            };
-
-            foreach (var assignment in testAssignments)
+                try
+                {
+                    DatabaseHelper.AddAssignment(desc, dl, cid);
+                    LoadAssignments();
+                }
+                catch (Exception ex)
+                {
+                    await DisplayAlert("Kļūda", $"Neizdevās pievienot uzdevumu: {ex.Message}", "OK");
+                }
+            }
+            else
             {
-                await DatabaseHelper.SaveAssignmentAsync(assignment);
-                Assignments.Add(assignment);
+                await DisplayAlert("Kļūda", "Nederīgi dati!", "OK");
+            }
+        }
+
+        private async void OnEditAssignmentClicked(object sender, EventArgs e)
+        {
+            if (AssignmentsListView.SelectedItem is AssignmentDisplay selA)
+            {
+                string newDesc = await DisplayPromptAsync("Labot uzdevumu", "Jauns apraksts:", initialValue: selA.Description);
+                string newDeadlineStr = await DisplayPromptAsync("Labot uzdevumu", "Jauns termiņš (YYYY-MM-DD):", initialValue: selA.Deadline.ToString("yyyy-MM-dd"));
+                string newCidStr = await DisplayPromptAsync("Labot uzdevumu", "Jauns CourseId:", initialValue: selA.CourseId.ToString());
+
+                if (!string.IsNullOrEmpty(newDesc) &&
+                    DateTime.TryParse(newDeadlineStr, out DateTime newDl) &&
+                    int.TryParse(newCidStr, out int newCid))
+                {
+                    try
+                    {
+                        DatabaseHelper.UpdateAssignment(selA.Id, newDesc, newDl, newCid);
+                        LoadAssignments();
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Kļūda", $"Neizdevās labot uzdevumu: {ex.Message}", "OK");
+                    }
+                }
+                else
+                {
+                    await DisplayAlert("Kļūda", "Nederīgi dati!", "OK");
+                }
+            }
+            else
+            {
+                await DisplayAlert("Brīdinājums", "Nav izvēlēts neviens uzdevums!", "OK");
+            }
+        }
+
+        private async void OnDeleteAssignmentClicked(object sender, EventArgs e)
+        {
+            if (AssignmentsListView.SelectedItem is AssignmentDisplay selA)
+            {
+                bool confirm = await DisplayAlert("Dzēst uzdevumu?", selA.Description, "Jā", "Nē");
+                if (confirm)
+                {
+                    try
+                    {
+                        DatabaseHelper.DeleteAssignment(selA.Id);
+                        LoadAssignments();
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Kļūda", $"Neizdevās dzēst uzdevumu: {ex.Message}", "OK");
+                    }
+                }
+            }
+            else
+            {
+                await DisplayAlert("Brīdinājums", "Nav izvēlēts neviens uzdevums!", "OK");
             }
         }
     }
 }
-
-

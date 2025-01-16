@@ -1,6 +1,5 @@
-﻿using Microsoft.Maui;
-using Microsoft.Maui.Controls.Hosting;
-using Microsoft.Maui.Hosting;
+﻿// MauiProgram.cs
+using Microsoft.Extensions.Logging;
 
 namespace MansLabojums
 {
@@ -10,7 +9,16 @@ namespace MansLabojums
         {
             var builder = MauiApp.CreateBuilder();
             builder
-                .UseMauiApp<App>();
+                .UseMauiApp<App>()  // piesaista App.xaml
+                .ConfigureFonts(fonts =>
+                {
+                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                    fonts.AddFont("OpenSans-SemiBold.ttf", "OpenSansSemiBold");
+                });
+
+#if DEBUG
+            builder.Logging.AddDebug();
+#endif
 
             return builder.Build();
         }

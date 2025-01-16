@@ -1,85 +1,159 @@
-﻿using Microsoft.Maui.Controls;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
-using System.Windows.Input;
+﻿/******************************************************
+ * MansLabojums/Views/TeachersPage.xaml.cs
+ ******************************************************/
 using MansLabojums.Models;
 using MansLabojums.Helpers;
+using Microsoft.Maui.Controls;
+using System;
+using System.Collections.ObjectModel;
 
 namespace MansLabojums.Views
 {
     public partial class TeachersPage : ContentPage
     {
+        // Vietējais modelis, lai sarakstā parādītu:
+        // * Skolotāja vārdu/uzvārdu
+        // * Dzimumu, Līguma datumu
+        // * Kursu sarakstu, ko pasniedz
+        public class TeacherDisplay
+        {
+            public int Id { get; set; }
+            public string TeacherFullName { get; set; } = "";
+            public string Gender { get; set; } = "";
+            public string ContractDateStr { get; set; } = "";
+            public string CoursesText { get; set; } = ""; // Piemērs: "Matemātika, Fizika"
+        }
+
+        private ObservableCollection<TeacherDisplay> _teachers = new();
+
         public TeachersPage()
         {
             InitializeComponent();
-            BindingContext = new TeachersViewModel();
-        }
-    }
-
-    public class TeachersViewModel : BaseViewModel
-    {
-        public ObservableCollection<Teacher> Teachers { get; set; }
-        public ICommand AddCommand { get; }
-        public ICommand EditCommand { get; }
-        public ICommand DeleteCommand { get; }
-        public ICommand GenerateTestDataCommand { get; }
-
-        public TeachersViewModel()
-        {
-            Title = "Pasniedzēji";
-            Teachers = new ObservableCollection<Teacher>();
-            AddCommand = new Command(async () => await AddTeacher());
-            EditCommand = new Command<Teacher>(async (teacher) => await EditTeacher(teacher));
-            DeleteCommand = new Command<Teacher>(async (teacher) => await DeleteTeacher(teacher));
-            GenerateTestDataCommand = new Command(async () => await GenerateTestData());
-
-            LoadTeachers().ConfigureAwait(false);
+            TeachersListView.ItemsSource = _teachers;
         }
 
-        async Task LoadTeachers()
+        protected override void OnAppearing()
         {
-            var teachers = await DatabaseHelper.GetTeachersAsync();
-            Teachers.Clear();
-            foreach (var teacher in teachers)
+            base.OnAppearing();
+            LoadTeachers();
+        }
+
+        private void LoadTeachers()
+        {
+            _teachers.Clear();
+
+            // Iegūstam skolotāju sarakstu
+            var teachers = DatabaseHelper.GetTeachers();
+            foreach (var t in teachers)
             {
-                Teachers.Add(teacher);
+                // No DatabaseHelper iegūstam šī skolotāja kursus
+                var teacherCourses = DatabaseHelper.GetCoursesByTeacherId(t.Id);
+                string coursesText = teacherCourses.Count > 0
+                    ? $"Kursi: {string.Join(", ", teacherCourses)}"
+                    : "(Nav kursu)";
+
+                _teachers.Add(new TeacherDisplay
+                {
+                    Id = t.Id,
+                    TeacherFullName = $"{t.Name} {t.Surname}",
+                    Gender = t.Gender,
+                    ContractDateStr = $"Līguma datums: {t.ContractDate:yyyy-MM-dd}",
+                    CoursesText = coursesText
+                });
             }
         }
 
-        async Task AddTeacher()
+        private async void OnAddTeacherClicked(object sender, EventArgs e)
         {
-            var teacher = new Teacher();
-            // Here you can implement a modal page to get user input
-            // await App.Current.MainPage.Navigation.PushAsync(new TeacherDetailPage(teacher));
-            await LoadTeachers();
-        }
+            string name = await DisplayPromptAsync("Jauns pasniedzējs", "Vārds:");
+            string surname = await DisplayPromptAsync("Jauns pasniedzējs", "Uzvārds:");
+            string gender = await DisplayActionSheet("Dzimums:", "Atcelt", null, "Male", "Female");
+            string dateStr = await DisplayPromptAsync("Jauns pasniedzējs", "Līguma datums (YYYY-MM-DD):");
 
-        async Task EditTeacher(Teacher teacher)
-        {
-            // Open the detail page for editing
-            // await App.Current.MainPage.Navigation.PushAsync(new TeacherDetailPage(teacher));
-            await LoadTeachers();
-        }
-
-        async Task DeleteTeacher(Teacher teacher)
-        {
-            await DatabaseHelper.DeleteTeacherAsync(teacher);
-            Teachers.Remove(teacher);
-        }
-
-        async Task GenerateTestData()
-        {
-            var testTeachers = new List<Teacher>
+            if (!string.IsNullOrEmpty(name) &&
+                !string.IsNullOrEmpty(surname) &&
+                (gender == "Male" || gender == "Female") &&
+                DateTime.TryParse(dateStr, out DateTime cDate))
             {
-                new Teacher { Name = "Test Teacher 1", Subject = "Subject 1" },
-                new Teacher { Name = "Test Teacher 2", Subject = "Subject 2" },
-                new Teacher { Name = "Test Teacher 3", Subject = "Subject 3" },
-            };
-
-            foreach (var teacher in testTeachers)
+                try
+                {
+                    DatabaseHelper.AddTeacher(name, surname, gender, cDate.ToString("yyyy-MM-dd"));
+                    LoadTeachers();
+                }
+                catch (Exception ex)
+                {
+                    await DisplayAlert("Kļūda", ex.Message, "Labi");
+                }
+            }
+            else
             {
-                await DatabaseHelper.SaveTeacherAsync(teacher);
-                Teachers.Add(teacher);
+                await DisplayAlert("Kļūda", "Nav korekti dati!", "Labi");
+            }
+        }
+
+        private async void OnEditTeacherClicked(object sender, EventArgs e)
+        {
+            if (TeachersListView.SelectedItem is TeacherDisplay selTeacher)
+            {
+                // Izvelkam esošos datus
+                string[] nm = selTeacher.TeacherFullName.Split(' ');
+                string oldName = (nm.Length > 0) ? nm[0] : "";
+                string oldSurname = (nm.Length > 1) ? nm[1] : "";
+                string oldGender = selTeacher.Gender;
+                string oldDateStr = selTeacher.ContractDateStr.Replace("Līguma datums: ", "");
+
+                string newName = await DisplayPromptAsync("Labot pasniedzēju", "Vārds:", initialValue: oldName);
+                string newSurname = await DisplayPromptAsync("Labot pasniedzēju", "Uzvārds:", initialValue: oldSurname);
+                string newGender = await DisplayActionSheet("Dzimums:", "Atcelt", null, "Male", "Female");
+                string newDateStr = await DisplayPromptAsync("Labot pasniedzēju", "Līguma datums (YYYY-MM-DD):", initialValue: oldDateStr);
+
+                if (!string.IsNullOrEmpty(newName) &&
+                    !string.IsNullOrEmpty(newSurname) &&
+                    (newGender == "Male" || newGender == "Female") &&
+                    DateTime.TryParse(newDateStr, out DateTime newDate))
+                {
+                    try
+                    {
+                        DatabaseHelper.UpdateTeacher(selTeacher.Id, newName, newSurname, newGender, newDate.ToString("yyyy-MM-dd"));
+                        LoadTeachers();
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Kļūda", ex.Message, "Labi");
+                    }
+                }
+                else
+                {
+                    await DisplayAlert("Kļūda", "Nav korekti dati!", "Labi");
+                }
+            }
+            else
+            {
+                await DisplayAlert("Brīdinājums", "Nav izvēlēts neviens pasniedzējs!", "Labi");
+            }
+        }
+
+        private async void OnDeleteTeacherClicked(object sender, EventArgs e)
+        {
+            if (TeachersListView.SelectedItem is TeacherDisplay selTeacher)
+            {
+                bool confirm = await DisplayAlert("Dzēst pasniedzēju?", selTeacher.TeacherFullName, "Jā", "Nē");
+                if (confirm)
+                {
+                    try
+                    {
+                        DatabaseHelper.DeleteTeacher(selTeacher.Id);
+                        LoadTeachers();
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Kļūda", ex.Message, "Labi");
+                    }
+                }
+            }
+            else
+            {
+                await DisplayAlert("Brīdinājums", "Nav izvēlēts neviens pasniedzējs!", "Labi");
             }
         }
     }

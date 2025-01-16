@@ -1,222 +1,704 @@
-﻿using SQLite;
+﻿/******************************************************
+ * MansLabojums/Helpers/DatabaseHelper.cs
+ * PILNĪBĀ UZLABOTA UN PILNA VERSIJA
+ ******************************************************/
+using Microsoft.Data.Sqlite;
+using MansLabojums.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
-using MansLabojums.Models;
+using System.Linq;
 
 namespace MansLabojums.Helpers
 {
     public static class DatabaseHelper
     {
-        private static SQLiteAsyncConnection? database;
+        private static readonly string ConnectionString = ConfigHelper.GetConnectionString();
 
-        public static SQLiteAsyncConnection Database
+        // ------------------- 1) INITIALIZATION & SEED -------------------
+        public static void InitializeDatabase()
         {
-            get
+            try
             {
-                if (database == null)
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+
+                // Teachers tabula
+                command.CommandText = @"
+                CREATE TABLE IF NOT EXISTS Teachers (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Name TEXT NOT NULL,
+                    Surname TEXT NOT NULL,
+                    Gender TEXT NOT NULL,
+                    ContractDate TEXT NOT NULL
+                );";
+                command.ExecuteNonQuery();
+
+                // Students tabula
+                command.CommandText = @"
+                CREATE TABLE IF NOT EXISTS Students (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Name TEXT NOT NULL,
+                    Surname TEXT NOT NULL,
+                    Gender TEXT NOT NULL,
+                    StudentIdNumber INTEGER NOT NULL
+                );";
+                command.ExecuteNonQuery();
+
+                // Courses tabula
+                command.CommandText = @"
+                CREATE TABLE IF NOT EXISTS Courses (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Name TEXT NOT NULL,
+                    TeacherId INTEGER NOT NULL,
+                    FOREIGN KEY (TeacherId) REFERENCES Teachers (Id)
+                );";
+                command.ExecuteNonQuery();
+
+                // Assignments tabula
+                command.CommandText = @"
+                CREATE TABLE IF NOT EXISTS Assignments (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Description TEXT NOT NULL,
+                    Deadline TEXT NOT NULL,
+                    CourseId INTEGER NOT NULL,
+                    FOREIGN KEY (CourseId) REFERENCES Courses (Id)
+                );";
+                command.ExecuteNonQuery();
+
+                // Submissions tabula
+                command.CommandText = @"
+                CREATE TABLE IF NOT EXISTS Submissions (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    AssignmentId INTEGER NOT NULL,
+                    StudentId INTEGER NOT NULL,
+                    SubmissionTime TEXT NOT NULL,
+                    Score INTEGER NOT NULL,
+                    FOREIGN KEY (AssignmentId) REFERENCES Assignments (Id),
+                    FOREIGN KEY (StudentId) REFERENCES Students (Id)
+                );";
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Neizdevās inicializēt datubāzi.", ex);
+            }
+        }
+
+        public static void SeedData()
+        {
+            try
+            {
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+
+                // Teachers
+                command.CommandText = @"
+                INSERT OR IGNORE INTO Teachers (Id, Name, Surname, Gender, ContractDate)
+                VALUES 
+                  (1, 'Jānis', 'Bērziņš', 'Male', '2022-01-01'),
+                  (2, 'Anna', 'Kalniņa', 'Female', '2023-05-01');
+                ";
+                command.ExecuteNonQuery();
+
+                // Students
+                command.CommandText = @"
+                INSERT OR IGNORE INTO Students (Id, Name, Surname, Gender, StudentIdNumber)
+                VALUES
+                  (1, 'Pēteris', 'Ozoliņš', 'Male', 12345),
+                  (2, 'Ilze', 'Liepa', 'Female', 54321);
+                ";
+                command.ExecuteNonQuery();
+
+                // Courses
+                command.CommandText = @"
+                INSERT OR IGNORE INTO Courses (Id, Name, TeacherId)
+                VALUES
+                  (1, 'Matemātika', 1),
+                  (2, 'Fizika', 2);
+                ";
+                command.ExecuteNonQuery();
+
+                // Assignments
+                command.CommandText = @"
+                INSERT OR IGNORE INTO Assignments (Id, Description, Deadline, CourseId)
+                VALUES
+                  (1, 'Algebras mājas darbs', '2024-12-31', 1),
+                  (2, 'Kustības vienādojumi', '2024-10-10', 2);
+                ";
+                command.ExecuteNonQuery();
+
+                // Submissions
+                command.CommandText = @"
+                INSERT OR IGNORE INTO Submissions (Id, AssignmentId, StudentId, SubmissionTime, Score)
+                VALUES
+                  (1, 1, 1, '2024-09-01 10:00', 95),
+                  (2, 2, 2, '2024-09-02 12:15', 88);
+                ";
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Neizdevās pievienot testa datus.", ex);
+            }
+        }
+
+        // ------------------- 2) TEACHERS CRUD -------------------
+        public static List<Teacher> GetTeachers()
+        {
+            var list = new List<Teacher>();
+            try
+            {
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "SELECT Id, Name, Surname, Gender, ContractDate FROM Teachers;";
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
                 {
-                    var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MansLabojums.db3");
-                    database = new SQLiteAsyncConnection(dbPath);
-                    InitializeDatabase().Wait();
+                    string dateStr = reader.GetString(4);
+                    var date = DateTime.Parse(dateStr);
+
+                    list.Add(new Teacher
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1),
+                        Surname = reader.GetString(2),
+                        Gender = reader.GetString(3),
+                        ContractDate = date
+                    });
                 }
-                return database;
             }
+            catch { }
+            return list;
         }
 
-        public static async Task InitializeDatabase()
+        public static void AddTeacher(string name, string surname, string gender, string contractDate)
         {
-            if (database != null)
+            try
             {
-                await database.CreateTableAsync<Assignment>();
-                await database.CreateTableAsync<Teacher>();
-                await database.CreateTableAsync<Student>();
-                await database.CreateTableAsync<Course>();
-                await database.CreateTableAsync<Submission>();
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    INSERT INTO Teachers (Name, Surname, Gender, ContractDate)
+                    VALUES ($n, $s, $g, $d);
+                ";
+                command.Parameters.AddWithValue("$n", name);
+                command.Parameters.AddWithValue("$s", surname);
+                command.Parameters.AddWithValue("$g", gender);
+                command.Parameters.AddWithValue("$d", contractDate);
+                command.ExecuteNonQuery();
             }
+            catch { }
         }
 
-        // --- Assignments ---
-        public static Task<List<Assignment>> GetAssignmentsAsync()
+        public static void UpdateTeacher(int id, string name, string surname, string gender, string contractDate)
         {
-            return Database.Table<Assignment>().ToListAsync();
+            try
+            {
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    UPDATE Teachers
+                    SET Name=$n, Surname=$s, Gender=$g, ContractDate=$d
+                    WHERE Id=$id;
+                ";
+                command.Parameters.AddWithValue("$n", name);
+                command.Parameters.AddWithValue("$s", surname);
+                command.Parameters.AddWithValue("$g", gender);
+                command.Parameters.AddWithValue("$d", contractDate);
+                command.Parameters.AddWithValue("$id", id);
+                command.ExecuteNonQuery();
+            }
+            catch { }
         }
 
-        public static Task<int> SaveAssignmentAsync(Assignment assignment)
+        public static void DeleteTeacher(int id)
         {
-            if (assignment.Id != 0)
+            try
             {
-                return Database.UpdateAsync(assignment);
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "DELETE FROM Teachers WHERE Id=$id;";
+                command.Parameters.AddWithValue("$id", id);
+                command.ExecuteNonQuery();
             }
-            else
-            {
-                return Database.InsertAsync(assignment);
-            }
+            catch { }
         }
 
-        public static Task<int> DeleteAssignmentAsync(Assignment assignment)
+        /// <summary>
+        /// Palīgmetode: lai pie TeachersPage var redzēt, kādus kursus šis pasniedzējs pasniedz
+        /// </summary>
+        public static List<string> GetCoursesByTeacherId(int teacherId)
         {
-            return Database.DeleteAsync(assignment);
+            var result = new List<string>();
+            try
+            {
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    SELECT Name FROM Courses
+                    WHERE TeacherId=$tid;
+                ";
+                command.Parameters.AddWithValue("$tid", teacherId);
+
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    result.Add(reader.GetString(0));
+                }
+            }
+            catch { }
+
+            return result;
         }
 
-        // --- Teachers ---
-        public static Task<List<Teacher>> GetTeachersAsync()
+        // ------------------- 3) STUDENTS CRUD -------------------
+        public static List<Student> GetStudents()
         {
-            return Database.Table<Teacher>().ToListAsync();
+            var list = new List<Student>();
+            try
+            {
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    SELECT Id, Name, Surname, Gender, StudentIdNumber 
+                    FROM Students;
+                ";
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    list.Add(new Student
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1),
+                        Surname = reader.GetString(2),
+                        Gender = reader.GetString(3),
+                        StudentIdNumber = reader.GetInt32(4)
+                    });
+                }
+            }
+            catch { }
+            return list;
         }
 
-        public static Task<int> SaveTeacherAsync(Teacher teacher)
+        public static void AddStudent(string name, string surname, string gender, int studentIdNumber)
         {
-            if (teacher.Id != 0)
+            try
             {
-                return Database.UpdateAsync(teacher);
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    INSERT INTO Students (Name, Surname, Gender, StudentIdNumber)
+                    VALUES ($n, $s, $g, $sidNum);
+                ";
+                command.Parameters.AddWithValue("$n", name);
+                command.Parameters.AddWithValue("$s", surname);
+                command.Parameters.AddWithValue("$g", gender);
+                command.Parameters.AddWithValue("$sidNum", studentIdNumber);
+                command.ExecuteNonQuery();
             }
-            else
-            {
-                return Database.InsertAsync(teacher);
-            }
+            catch { }
         }
 
-        public static Task<int> DeleteTeacherAsync(Teacher teacher)
+        public static void UpdateStudent(int id, string name, string surname)
         {
-            return Database.DeleteAsync(teacher);
+            try
+            {
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    UPDATE Students
+                    SET Name=$n, Surname=$s
+                    WHERE Id=$id;
+                ";
+                command.Parameters.AddWithValue("$n", name);
+                command.Parameters.AddWithValue("$s", surname);
+                command.Parameters.AddWithValue("$id", id);
+                command.ExecuteNonQuery();
+            }
+            catch { }
         }
 
-        // --- Students ---
-        public static Task<List<Student>> GetStudentsAsync()
+        public static void DeleteStudent(int id)
         {
-            return Database.Table<Student>().ToListAsync();
+            try
+            {
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "DELETE FROM Students WHERE Id=$id;";
+                command.Parameters.AddWithValue("$id", id);
+                command.ExecuteNonQuery();
+            }
+            catch { }
         }
 
-        public static Task<int> SaveStudentAsync(Student student)
+        // ------------------- 4) COURSES CRUD -------------------
+        public static List<Dictionary<string, object>> GetCourses()
         {
-            if (student.Id != 0)
+            var results = new List<Dictionary<string, object>>();
+            try
             {
-                return Database.UpdateAsync(student);
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "SELECT Id, Name, TeacherId FROM Courses;";
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    var dict = new Dictionary<string, object>();
+                    dict["Id"] = reader.GetInt32(0);
+                    dict["Name"] = reader.GetString(1);
+                    dict["TeacherId"] = reader.GetInt32(2);
+                    results.Add(dict);
+                }
             }
-            else
-            {
-                return Database.InsertAsync(student);
-            }
+            catch { }
+            return results;
         }
 
-        public static Task<int> DeleteStudentAsync(Student student)
+        public static void AddCourse(string name, int teacherId)
         {
-            return Database.DeleteAsync(student);
+            try
+            {
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    INSERT INTO Courses (Name, TeacherId)
+                    VALUES ($cn, $tid);
+                ";
+                command.Parameters.AddWithValue("$cn", name);
+                command.Parameters.AddWithValue("$tid", teacherId);
+                command.ExecuteNonQuery();
+            }
+            catch { }
         }
 
-        // --- Courses ---
-        public static Task<List<Course>> GetCoursesAsync()
+        public static void UpdateCourse(int courseId, string courseName, int teacherId)
         {
-            return Database.Table<Course>().ToListAsync();
+            try
+            {
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    UPDATE Courses
+                    SET Name=$cn, TeacherId=$tid
+                    WHERE Id=$id;
+                ";
+                command.Parameters.AddWithValue("$cn", courseName);
+                command.Parameters.AddWithValue("$tid", teacherId);
+                command.Parameters.AddWithValue("$id", courseId);
+                command.ExecuteNonQuery();
+            }
+            catch { }
         }
 
-        public static Task<int> SaveCourseAsync(Course course)
+        public static void DeleteCourse(int courseId)
         {
-            if (course.Id != 0)
+            try
             {
-                return Database.UpdateAsync(course);
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "DELETE FROM Courses WHERE Id=$id;";
+                command.Parameters.AddWithValue("$id", courseId);
+                command.ExecuteNonQuery();
             }
-            else
-            {
-                return Database.InsertAsync(course);
-            }
+            catch { }
         }
 
-        public static Task<int> DeleteCourseAsync(Course course)
+        /// <summary>
+        /// Lai CoursesPage var redzēt TeacherName pie katra kursa
+        /// </summary>
+        public static List<Dictionary<string, object>> GetCoursesWithTeacherName()
         {
-            return Database.DeleteAsync(course);
+            var list = new List<Dictionary<string, object>>();
+            try
+            {
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    SELECT c.Id,
+                           c.Name AS CourseName,
+                           (t.Name || ' ' || t.Surname) AS TeacherName
+                    FROM Courses c
+                    JOIN Teachers t ON c.TeacherId = t.Id;
+                ";
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    var dict = new Dictionary<string, object>();
+                    dict["Id"] = reader.GetInt32(0);
+                    dict["CourseName"] = reader.GetString(1);
+                    dict["TeacherName"] = reader.GetString(2);
+                    list.Add(dict);
+                }
+            }
+            catch { }
+            return list;
         }
 
-        // --- Submissions ---
-        public static Task<List<Submission>> GetSubmissionsAsync()
+        // ------------------- 5) ASSIGNMENTS CRUD -------------------
+        public static List<Assignment> GetAssignments()
         {
-            return Database.Table<Submission>().ToListAsync();
+            var list = new List<Assignment>();
+            try
+            {
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "SELECT Id, Description, Deadline, CourseId FROM Assignments;";
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    var dateStr = reader.GetString(2);
+                    list.Add(new Assignment
+                    {
+                        Id = reader.GetInt32(0),
+                        Description = reader.GetString(1),
+                        Deadline = DateTime.Parse(dateStr),
+                        CourseId = reader.GetInt32(3)
+                    });
+                }
+            }
+            catch { }
+            return list;
         }
 
-        public static Task<int> SaveSubmissionAsync(Submission submission)
+        public static void AddAssignment(string description, DateTime deadline, int courseId)
         {
-            if (submission.Id != 0)
+            try
             {
-                return Database.UpdateAsync(submission);
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    INSERT INTO Assignments (Description, Deadline, CourseId)
+                    VALUES ($desc, $dl, $cid);
+                ";
+                command.Parameters.AddWithValue("$desc", description);
+                command.Parameters.AddWithValue("$dl", deadline.ToString("yyyy-MM-dd"));
+                command.Parameters.AddWithValue("$cid", courseId);
+                command.ExecuteNonQuery();
             }
-            else
-            {
-                return Database.InsertAsync(submission);
-            }
+            catch { }
         }
 
-        public static Task<int> DeleteSubmissionAsync(Submission submission)
+        public static void UpdateAssignment(int id, string description, DateTime deadline, int courseId)
         {
-            return Database.DeleteAsync(submission);
+            try
+            {
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    UPDATE Assignments
+                    SET Description=$desc, Deadline=$dl, CourseId=$cid
+                    WHERE Id=$id;
+                ";
+                command.Parameters.AddWithValue("$desc", description);
+                command.Parameters.AddWithValue("$dl", deadline.ToString("yyyy-MM-dd"));
+                command.Parameters.AddWithValue("$cid", courseId);
+                command.Parameters.AddWithValue("$id", id);
+                command.ExecuteNonQuery();
+            }
+            catch { }
         }
 
-        // Seed Data
-        public static async Task SeedDataAsync()
+        public static void DeleteAssignment(int id)
         {
-            // Seed Teachers
-            var teachers = new List<Teacher>
+            try
             {
-                new Teacher { Name = "Anna", Subject = "Mathematics" },
-                new Teacher { Name = "Peter", Subject = "Physics" }
-            };
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
 
-            foreach (var teacher in teachers)
-            {
-                await SaveTeacherAsync(teacher);
+                using var command = connection.CreateCommand();
+                command.CommandText = "DELETE FROM Assignments WHERE Id=$id;";
+                command.Parameters.AddWithValue("$id", id);
+                command.ExecuteNonQuery();
             }
+            catch { }
+        }
 
-            // Seed Students
-            var students = new List<Student>
+        // ------------------- 6) SUBMISSIONS CRUD -------------------
+        /// <summary>
+        /// Vienkāršāka versija, kas atgriež: Id, AssignmentDescription, StudentName, SubmissionTime, Score
+        /// </summary>
+        public static List<Dictionary<string, object>> GetSubmissions()
+        {
+            var list = new List<Dictionary<string, object>>();
+            try
             {
-                new Student { Name = "John", StudentId = "S1001" },
-                new Student { Name = "Mary", StudentId = "S1002" }
-            };
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
 
-            foreach (var student in students)
-            {
-                await SaveStudentAsync(student);
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    SELECT s.Id,
+                           a.Description AS AssignmentDescription,
+                           st.Name AS StudentName,
+                           s.SubmissionTime,
+                           s.Score
+                    FROM Submissions s
+                    INNER JOIN Assignments a ON s.AssignmentId = a.Id
+                    INNER JOIN Students st ON s.StudentId = st.Id;
+                ";
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    var dict = new Dictionary<string, object>();
+                    dict["Id"] = reader.GetInt32(0);
+                    dict["AssignmentDescription"] = reader.GetString(1);
+                    dict["StudentName"] = reader.GetString(2);
+                    dict["SubmissionTime"] = reader.GetString(3);
+                    dict["Score"] = reader.GetInt32(4);
+                    list.Add(dict);
+                }
             }
+            catch { }
+            return list;
+        }
 
-            // Seed Courses
-            var courses = new List<Course>
+        /// <summary>
+        /// Plašāka versija, lai varam SubmissionsPage rādīt/atlasīt ar ID
+        /// 
+        /// (Id, AssignmentId, StudentId, AssignmentDescription, StudentName, SubmissionTime, Score)
+        /// </summary>
+        public static List<Dictionary<string, object>> GetSubmissionsWithIDs()
+        {
+            var list = new List<Dictionary<string, object>>();
+            try
             {
-                new Course { CourseName = "Algebra", TeacherId = 1 },
-                new Course { CourseName = "Physics", TeacherId = 2 }
-            };
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
 
-            foreach (var course in courses)
-            {
-                await SaveCourseAsync(course);
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    SELECT s.Id,
+                           s.AssignmentId,
+                           s.StudentId,
+                           a.Description AS AssignmentDescription,
+                           st.Name AS StudentName,
+                           s.SubmissionTime,
+                           s.Score
+                    FROM Submissions s
+                    INNER JOIN Assignments a ON s.AssignmentId = a.Id
+                    INNER JOIN Students st ON s.StudentId = st.Id;
+                ";
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    var dict = new Dictionary<string, object>();
+                    dict["Id"] = reader.GetInt32(0);
+                    dict["AssignmentId"] = reader.GetInt32(1);
+                    dict["StudentId"] = reader.GetInt32(2);
+                    dict["AssignmentDescription"] = reader.GetString(3);
+                    dict["StudentName"] = reader.GetString(4);
+                    dict["SubmissionTime"] = reader.GetString(5);
+                    dict["Score"] = reader.GetInt32(6);
+                    list.Add(dict);
+                }
             }
+            catch { }
+            return list;
+        }
 
-            // Seed Assignments
-            var assignments = new List<Assignment>
+        /// <summary>
+        /// Pievienot iesniegumu, meklējot assignment un studentu pēc Name / Description
+        /// (kā tika rādīts SubmissionsPage)
+        /// </summary>
+        public static void AddSubmission(string assignmentDescription, string studentName, int score)
+        {
+            try
             {
-                new Assignment { Name = "Assignment 1", Description = "Description 1", CourseId = 1 },
-                new Assignment { Name = "Assignment 2", Description = "Description 2", CourseId = 2 }
-            };
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
 
-            foreach (var assignment in assignments)
-            {
-                await SaveAssignmentAsync(assignment);
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    INSERT INTO Submissions (AssignmentId, StudentId, SubmissionTime, Score)
+                    VALUES (
+                        (SELECT Id FROM Assignments WHERE Description=$ad),
+                        (SELECT Id FROM Students WHERE Name=$sn),
+                        $tNow,
+                        $sc
+                    );
+                ";
+                command.Parameters.AddWithValue("$ad", assignmentDescription);
+                command.Parameters.AddWithValue("$sn", studentName);
+                command.Parameters.AddWithValue("$tNow", DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
+                command.Parameters.AddWithValue("$sc", score);
+
+                command.ExecuteNonQuery();
             }
+            catch { }
+        }
 
-            // Seed Submissions
-            var submissions = new List<Submission>
+        public static void UpdateSubmission(int submissionId, int newScore)
+        {
+            try
             {
-                new Submission { AssignmentId = 1, StudentId = 1, Content = "Submission 1" },
-                new Submission { AssignmentId = 2, StudentId = 2, Content = "Submission 2" }
-            };
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
 
-            foreach (var submission in submissions)
-            {
-                await SaveSubmissionAsync(submission);
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    UPDATE Submissions
+                    SET Score=$scr
+                    WHERE Id=$id;
+                ";
+                command.Parameters.AddWithValue("$scr", newScore);
+                command.Parameters.AddWithValue("$id", submissionId);
+                command.ExecuteNonQuery();
             }
+            catch { }
+        }
+
+        public static void DeleteSubmission(int submissionId)
+        {
+            try
+            {
+                using var connection = new SqliteConnection(ConnectionString);
+                connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = "DELETE FROM Submissions WHERE Id=$id;";
+                command.Parameters.AddWithValue("$id", submissionId);
+                command.ExecuteNonQuery();
+            }
+            catch { }
         }
     }
 }
-
-
-
-

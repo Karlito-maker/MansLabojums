@@ -1,0 +1,107 @@
+﻿<!-- MansLabojums/Views/MainPage.xaml -->
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="MansLabojums.Views.MainPage"
+    Title="Galvenā lapa">
+
+    <!-- 1) FONS - viegls, neitrāls gradients -->
+    <ContentPage.Background>
+        <LinearGradientBrush EndPoint="0,1">
+            <GradientStop Color="#f0f0f0" Offset="0.0"/>
+            <GradientStop Color="#ffffff" Offset="1.0"/>
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <ContentPage.Resources>
+        <!-- 2) Pogas stils -->
+        <Style TargetType="Button" x:Key="MainActionButton">
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="TextColor" Value="#333333" />
+            <Setter Property="BackgroundColor" Value="#e7e7e7" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="HeightRequest" Value="46" />
+            <Setter Property="Margin" Value="0,4" />
+        </Style>
+
+        <!-- 3) Frame stils - “kartiņas” izskats -->
+        <Style TargetType="Frame" x:Key="MainFrameStyle">
+            <Setter Property="BackgroundColor" Value="#ffffffcc" />
+            <!-- 'cc' = 80% opacity, lai viegli caurspīdīgs -->
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="HasShadow" Value="True" />
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="Margin" Value="0,8" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="20"
+            Spacing="10"
+            HorizontalOptions="Center"
+            VerticalOptions="CenterAndExpand">
+
+            <!-- Virsraksts -->
+            <Label Text="Datubāzes lietotne"
+                   FontSize="32"
+                   FontAttributes="Bold"
+                   TextColor="#333333"
+                   HorizontalOptions="Center" 
+                   Margin="0,10,0,0" />
+
+            <!-- Apraksts -->
+            <Label Text="Veiciet datubāzes inicializāciju, ievadiet testa datus un pārvaldiet datus dažādās sadaļās."
+                   FontSize="14"
+                   TextColor="#444444"
+                   HorizontalTextAlignment="Center"
+                   Margin="0,0,0,12" />
+
+            <!-- Kartiņa ar DB pogām -->
+            <Frame Style="{StaticResource MainFrameStyle}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Datubāzes iestatījumi"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           TextColor="#333333"
+                           HorizontalOptions="Center"/>
+                    <Button Text="Inicializēt datubāzi"
+                            Style="{StaticResource MainActionButton}"
+                            Clicked="OnInitDbClicked"/>
+                    <Button Text="Ievadīt testa datus"
+                            Style="{StaticResource MainActionButton}"
+                            Clicked="OnSeedDataClicked"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Kartiņa ar navigācijas pogām -->
+            <Frame Style="{StaticResource MainFrameStyle}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Pārvaldīt datus:"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           TextColor="#333333"
+                           HorizontalOptions="Center"/>
+
+                    <Button Text="Studenti"
+                            Style="{StaticResource MainActionButton}"
+                            Clicked="NavigateToStudentsPage"/>
+                    <Button Text="Uzdevumi"
+                            Style="{StaticResource MainActionButton}"
+                            Clicked="NavigateToAssignmentsPage"/>
+                    <Button Text="Iesniegumi"
+                            Style="{StaticResource MainActionButton}"
+                            Clicked="NavigateToSubmissionsPage"/>
+                    <Button Text="Kursi"
+                            Style="{StaticResource MainActionButton}"
+                            Clicked="NavigateToCoursesPage"/>
+                    <Button Text="Pasniedzēji"
+                            Style="{StaticResource MainActionButton}"
+                            Clicked="NavigateToTeachersPage"/>
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

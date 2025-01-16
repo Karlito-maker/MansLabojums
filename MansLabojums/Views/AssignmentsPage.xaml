@@ -1,60 +1,38 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    x:Class="MansLabojums.Views.AssignmentsPage"
-    Title="{Binding Title}">
+﻿<!-- MansLabojums/Views/AssignmentsPage.xaml -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MansLabojums.Views.AssignmentsPage"
+             Title="Uzdevumi">
 
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <Style x:Key="ButtonStyle" TargetType="Button">
-                <Setter Property="BackgroundColor" Value="#6200EE" />
-                <Setter Property="TextColor" Value="White" />
-                <Setter Property="CornerRadius" Value="8" />
-                <Setter Property="FontSize" Value="16" />
-                <Setter Property="HeightRequest" Value="50" />
-            </Style>
-        </ResourceDictionary>
-    </ContentPage.Resources>
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="10">
 
-    <Grid Padding="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+            <Label Text="Uzdevumu saraksts"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
 
-        <StackLayout Orientation="Horizontal" Grid.Row="0" Spacing="10">
-            <Button Text="Pievienot"
-                    Command="{Binding AddCommand}"
-                    Style="{StaticResource ButtonStyle}" />
-            <Button Text="Testa dati"
-                    Command="{Binding GenerateTestDataCommand}"
-                    Style="{StaticResource ButtonStyle}" />
-        </StackLayout>
+            <ListView x:Name="AssignmentsListView"
+                      SelectionMode="Single">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <!-- Rādām: Uzdevuma ID, Apraksts, Deadline (YYYY-MM-DD) -->
+                        <TextCell Text="{Binding DisplayTitle}"
+                                  Detail="{Binding DisplayDetail}" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
 
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Assignments}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <SwipeView>
-                        <SwipeView.RightItems>
-                            <SwipeItems Mode="Execute">
-                                <SwipeItem Text="Labot"
-                                           BackgroundColor="LightGreen"
-                                           Command="{Binding BindingContext.EditCommand, Source={x:Reference Name=AssignmentsPage}}"
-                                           CommandParameter="{Binding .}" />
-                                <SwipeItem Text="Dzēst"
-                                           BackgroundColor="Red"
-                                           Command="{Binding BindingContext.DeleteCommand, Source={x:Reference Name=AssignmentsPage}}"
-                                           CommandParameter="{Binding .}" />
-                            </SwipeItems>
-                        </SwipeView.RightItems>
-                        <Grid Padding="10">
-                            <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" />
-                            <Label Text="{Binding Description}" FontSize="14" TextColor="Gray" />
-                        </Grid>
-                    </SwipeView>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </Grid>
+            <HorizontalStackLayout Spacing="10">
+                <Button Text="Pievienot"
+                        Clicked="OnAddAssignmentClicked"/>
+                <Button Text="Labot"
+                        Clicked="OnEditAssignmentClicked"/>
+                <Button Text="Dzēst"
+                        Clicked="OnDeleteAssignmentClicked"/>
+            </HorizontalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
 </ContentPage>

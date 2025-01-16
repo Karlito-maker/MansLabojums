@@ -1,41 +1,25 @@
-﻿using System;
+﻿/******************************************************
+ *  MansLabojums/Helpers/ConfigHelper.cs
+ ******************************************************/
+using System;
 using System.IO;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace MansLabojums.Helpers
 {
     public static class ConfigHelper
     {
-        private static readonly string configFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "config.json");
-
-        public static async Task<AppConfig> LoadConfigAsync()
+        public static string GetConnectionString()
         {
-            if (!File.Exists(configFilePath))
+            try
             {
-                var defaultConfig = new AppConfig();
-                await SaveConfigAsync(defaultConfig);
-                return defaultConfig;
+                // Izlasa connection string no C:\Temp\ConnS.txt
+                string path = @"C:\Temp\ConnS.txt";
+                return File.ReadAllText(path).Trim();
             }
-
-            var json = await File.ReadAllTextAsync(configFilePath);
-            var config = JsonSerializer.Deserialize<AppConfig>(json);
-            return config ?? new AppConfig(); // Ensure a non-null value is returned
+            catch (Exception ex)
+            {
+                throw new Exception($"Neizdevās nolasīt connection string no {@"C:\Temp\ConnS.txt"}", ex);
+            }
         }
-
-        public static async Task SaveConfigAsync(AppConfig config)
-        {
-            var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
-            await File.WriteAllTextAsync(configFilePath, json);
-        }
-    }
-
-    public class AppConfig
-    {
-        public string ApiUrl { get; set; } = "https://api.example.com";
-        public string ApiKey { get; set; } = "default_api_key";
-        public bool EnableLogging { get; set; } = true;
     }
 }
-
-

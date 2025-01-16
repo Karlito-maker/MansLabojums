@@ -1,63 +1,52 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    x:Class="MansLabojums.Views.TeachersPage"
-    Title="{Binding Title}">
+﻿<!-- MansLabojums/Views/TeachersPage.xaml -->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MansLabojums.Views.TeachersPage"
+             Title="Pasniedzēji">
 
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <Style x:Key="ButtonStyle" TargetType="Button">
-                <Setter Property="BackgroundColor" Value="#6200EE" />
-                <Setter Property="TextColor" Value="White" />
-                <Setter Property="CornerRadius" Value="8" />
-                <Setter Property="FontSize" Value="16" />
-                <Setter Property="HeightRequest" Value="50" />
-            </Style>
-        </ResourceDictionary>
-    </ContentPage.Resources>
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="10">
 
-    <Grid Padding="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+            <Label Text="Pasniedzēju saraksts"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
 
-        <StackLayout Orientation="Horizontal" Grid.Row="0" Spacing="10">
-            <Button Text="Pievienot"
-                    Command="{Binding AddCommand}"
-                    Style="{StaticResource ButtonStyle}" />
-            <Button Text="Testa dati"
-                    Command="{Binding GenerateTestDataCommand}"
-                    Style="{StaticResource ButtonStyle}" />
-        </StackLayout>
+            <!-- Saraksts, kas rāda skolotāja vārdu, uzvārdu, un viņa kursus. -->
+            <ListView x:Name="TeachersListView"
+                      SelectionMode="Single">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <StackLayout Padding="5">
+                                <Label Text="{Binding TeacherFullName}"
+                                       FontAttributes="Bold"
+                                       FontSize="18" />
+                                <Label Text="{Binding Gender}"
+                                       FontSize="12" />
+                                <Label Text="{Binding ContractDateStr}"
+                                       FontSize="12" />
+                                <!-- Kursu saraksts, ko pasniedzējs pasniedz -->
+                                <Label Text="{Binding CoursesText}"
+                                       FontAttributes="Italic"
+                                       FontSize="12" />
+                            </StackLayout>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
 
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Teachers}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <SwipeView>
-                        <SwipeView.RightItems>
-                            <SwipeItems Mode="Execute">
-                                <SwipeItem Text="Labot"
-                                           BackgroundColor="LightGreen"
-                                           Command="{Binding BindingContext.EditCommand, Source={x:Reference Name=TeachersPage}}"
-                                           CommandParameter="{Binding .}" />
-                                <SwipeItem Text="Dzēst"
-                                           BackgroundColor="Red"
-                                           Command="{Binding BindingContext.DeleteCommand, Source={x:Reference Name=TeachersPage}}"
-                                           CommandParameter="{Binding .}" />
-                            </SwipeItems>
-                        </SwipeView.RightItems>
-                        <Grid Padding="10">
-                            <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" />
-                            <Label Text="{Binding Subject}" FontSize="14" TextColor="Gray" />
-                        </Grid>
-                    </SwipeView>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </Grid>
+            <!-- Pievienot/Labot/Dzēst pasniedzēju pogas -->
+            <HorizontalStackLayout Spacing="10">
+                <Button Text="Pievienot"
+                        Clicked="OnAddTeacherClicked"/>
+                <Button Text="Labot"
+                        Clicked="OnEditTeacherClicked"/>
+                <Button Text="Dzēst"
+                        Clicked="OnDeleteTeacherClicked"/>
+            </HorizontalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
 </ContentPage>
-
-
-
