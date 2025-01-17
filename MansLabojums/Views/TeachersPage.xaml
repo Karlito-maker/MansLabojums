@@ -1,52 +1,81 @@
-﻿<!-- MansLabojums/Views/TeachersPage.xaml -->
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MansLabojums.Views.TeachersPage"
              Title="Pasniedzēji">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="10">
+        <VerticalStackLayout Padding="20" Spacing="12">
 
             <Label Text="Pasniedzēju saraksts"
                    FontSize="24"
                    FontAttributes="Bold"
                    HorizontalOptions="Center" />
 
-            <!-- Saraksts, kas rāda skolotāja vārdu, uzvārdu, un viņa kursus. -->
             <ListView x:Name="TeachersListView"
-                      SelectionMode="Single">
+                      SelectionMode="Single"
+                      HeightRequest="200"
+                      ItemSelected="OnTeacherSelected">
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>
                             <StackLayout Padding="5">
-                                <Label Text="{Binding TeacherFullName}"
+                                <Label Text="{Binding DisplayName}"
                                        FontAttributes="Bold"
-                                       FontSize="18" />
-                                <Label Text="{Binding Gender}"
-                                       FontSize="12" />
-                                <Label Text="{Binding ContractDateStr}"
-                                       FontSize="12" />
-                                <!-- Kursu saraksts, ko pasniedzējs pasniedz -->
+                                       FontSize="16"/>
+                                <Label Text="{Binding GenderDateText}"
+                                       FontSize="12"/>
                                 <Label Text="{Binding CoursesText}"
-                                       FontAttributes="Italic"
-                                       FontSize="12" />
+                                       FontSize="12"
+                                       FontAttributes="Italic"/>
                             </StackLayout>
                         </ViewCell>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
 
-            <!-- Pievienot/Labot/Dzēst pasniedzēju pogas -->
             <HorizontalStackLayout Spacing="10">
-                <Button Text="Pievienot"
-                        Clicked="OnAddTeacherClicked"/>
-                <Button Text="Labot"
+                <Button x:Name="EditButton"
+                        Text="Labot"
+                        IsEnabled="False"
                         Clicked="OnEditTeacherClicked"/>
-                <Button Text="Dzēst"
+                <Button x:Name="DeleteButton"
+                        Text="Dzēst"
+                        IsEnabled="False"
                         Clicked="OnDeleteTeacherClicked"/>
             </HorizontalStackLayout>
 
+            <!-- Forma, lai pievienotu jaunu teacher -->
+            <Frame BackgroundColor="#eeeeee" Padding="10">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Pievienot pasniedzēju"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center" />
+
+                    <Entry x:Name="NameEntry"
+                           Placeholder="Vārds" />
+                    <Entry x:Name="SurnameEntry"
+                           Placeholder="Uzvārds" />
+                    <Picker x:Name="GenderPicker"
+                            Title="Dzimums">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>Male</x:String>
+                                <x:String>Female</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+                    <Entry x:Name="ContractDateEntry"
+                           Placeholder="Līguma datums (YYYY-MM-DD)" />
+
+                    <HorizontalStackLayout Spacing="10">
+                        <Button Text="Pievienot"
+                                Clicked="OnAddTeacherClicked"/>
+                        <Button Text="Cancel"
+                                Clicked="OnCancelAddClicked"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

@@ -1,7 +1,9 @@
 ﻿/******************************************************
  * MansLabojums/Helpers/DatabaseHelper.cs
- * PILNĪBĀ UZLABOTA UN PILNA VERSIJA
+ * PILNĀ VERSIJA AR `GetCoursesByTeacherId(...)`
+ * LATVISKIE KOMENTĀRI IEKĻAUTI
  ******************************************************/
+
 using Microsoft.Data.Sqlite;
 using MansLabojums.Models;
 using System;
@@ -11,11 +13,21 @@ using System.Linq;
 
 namespace MansLabojums.Helpers
 {
+    /// <summary>
+    /// Šī statiskā klase nodrošina CRUD un citas darbības ar datubāzi,
+    /// izmantojot SQLite un piekļuvi no .NET MAUI lietotnes.
+    /// </summary>
     public static class DatabaseHelper
     {
+        // Savienojuma virkne tiek iegūta no ConfigHelper, kur to lasa no faila
         private static readonly string ConnectionString = ConfigHelper.GetConnectionString();
 
-        // ------------------- 1) INITIALIZATION & SEED -------------------
+        // ------------------- 1) Datubāzes inicializācija un testa datu ievade -------------------
+
+        /// <summary>
+        /// Izveido tabulas (ja tādas vēl nav), iestata foreign_keys=ON, 
+        /// lai var izmantot ārējās atslēgas un (ja konfigurēts) ON DELETE CASCADE.
+        /// </summary>
         public static void InitializeDatabase()
         {
             try
@@ -23,9 +35,12 @@ namespace MansLabojums.Helpers
                 using var connection = new SqliteConnection(ConnectionString);
                 connection.Open();
 
+                // Ieslēdzam ārējo atslēgu atbalstu SQLite:
                 using var command = connection.CreateCommand();
+                command.CommandText = "PRAGMA foreign_keys=ON;";
+                command.ExecuteNonQuery();
 
-                // Teachers
+                // Teachers tabula
                 command.CommandText = @"
                 CREATE TABLE IF NOT EXISTS Teachers (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,7 +51,7 @@ namespace MansLabojums.Helpers
                 );";
                 command.ExecuteNonQuery();
 
-                // Students
+                // Students tabula
                 command.CommandText = @"
                 CREATE TABLE IF NOT EXISTS Students (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,37 +62,37 @@ namespace MansLabojums.Helpers
                 );";
                 command.ExecuteNonQuery();
 
-                // Courses
+                // Courses tabula (var pievienot ON DELETE CASCADE, ja gribas automātisku kaskādes dzēšanu)
                 command.CommandText = @"
                 CREATE TABLE IF NOT EXISTS Courses (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     Name TEXT NOT NULL,
-                    TeacherId INTEGER NOT NULL,
-                    FOREIGN KEY (TeacherId) REFERENCES Teachers (Id)
+                    TeacherId INTEGER NOT NULL
+                    /*,FOREIGN KEY(TeacherId) REFERENCES Teachers(Id) ON DELETE CASCADE*/
                 );";
                 command.ExecuteNonQuery();
 
-                // Assignments
+                // Assignments tabula
                 command.CommandText = @"
                 CREATE TABLE IF NOT EXISTS Assignments (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     Description TEXT NOT NULL,
                     Deadline TEXT NOT NULL,
-                    CourseId INTEGER NOT NULL,
-                    FOREIGN KEY (CourseId) REFERENCES Courses (Id)
+                    CourseId INTEGER NOT NULL
+                    /*,FOREIGN KEY(CourseId) REFERENCES Courses(Id) ON DELETE CASCADE*/
                 );";
                 command.ExecuteNonQuery();
 
-                // Submissions
+                // Submissions tabula
                 command.CommandText = @"
                 CREATE TABLE IF NOT EXISTS Submissions (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     AssignmentId INTEGER NOT NULL,
                     StudentId INTEGER NOT NULL,
                     SubmissionTime TEXT NOT NULL,
-                    Score INTEGER NOT NULL,
-                    FOREIGN KEY (AssignmentId) REFERENCES Assignments (Id),
-                    FOREIGN KEY (StudentId) REFERENCES Students (Id)
+                    Score INTEGER NOT NULL
+                    /*,FOREIGN KEY(AssignmentId) REFERENCES Assignments(Id) ON DELETE CASCADE,
+                      FOREIGN KEY(StudentId) REFERENCES Students(Id) ON DELETE CASCADE*/
                 );";
                 command.ExecuteNonQuery();
             }
@@ -87,6 +102,9 @@ namespace MansLabojums.Helpers
             }
         }
 
+        /// <summary>
+        /// Ievada testa datus Teachers, Students, Courses, Assignments, Submissions tabulās (ja tie vēl nav).
+        /// </summary>
         public static void SeedData()
         {
             try
@@ -94,7 +112,10 @@ namespace MansLabojums.Helpers
                 using var connection = new SqliteConnection(ConnectionString);
                 connection.Open();
 
+                // Atkal ieslēdzam ārējo atslēgu atbalstu:
                 using var command = connection.CreateCommand();
+                command.CommandText = "PRAGMA foreign_keys=ON;";
+                command.ExecuteNonQuery();
 
                 // Teachers
                 command.CommandText = @"
@@ -147,7 +168,11 @@ namespace MansLabojums.Helpers
             }
         }
 
-        // ------------------- 2) TEACHERS CRUD -------------------
+        // ------------------- TEACHERS CRUD -------------------
+
+        /// <summary>
+        /// Nolasa visus Teacher ierakstus no Teachers tabulas un atgriež List<Teacher>.
+        /// </summary>
         public static List<Teacher> GetTeachers()
         {
             var list = new List<Teacher>();
@@ -173,10 +198,16 @@ namespace MansLabojums.Helpers
                     });
                 }
             }
-            catch { }
+            catch
+            {
+                // Ja rodas kļūda, var logot vai rīkoties citādi
+            }
             return list;
         }
 
+        /// <summary>
+        /// Pievieno jaunu Teacher tabulā.
+        /// </summary>
         public static void AddTeacher(string name, string surname, string gender, string contractDate)
         {
             try
@@ -194,9 +225,15 @@ namespace MansLabojums.Helpers
                 command.Parameters.AddWithValue("$d", contractDate);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+                // Klusi apēdam kļūdu vai logojam
+            }
         }
 
+        /// <summary>
+        /// Atjauno teacher datus (Name, Surname, Gender, ContractDate) pēc Id.
+        /// </summary>
         public static void UpdateTeacher(int id, string name, string surname, string gender, string contractDate)
         {
             try
@@ -216,9 +253,14 @@ namespace MansLabojums.Helpers
                 command.Parameters.AddWithValue("$id", id);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
+        /// <summary>
+        /// Dzēš teacher rindu pēc Id.
+        /// </summary>
         public static void DeleteTeacher(int id)
         {
             try
@@ -230,31 +272,45 @@ namespace MansLabojums.Helpers
                 command.Parameters.AddWithValue("$id", id);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
+        /// <summary>
+        /// Atgriež vienkāršu sarakstu ar kursu nosaukumiem, kas pieder teacherId. Noder, lai parādītu "Kursi: X, Y, Z".
+        /// </summary>
         public static List<string> GetCoursesByTeacherId(int teacherId)
         {
-            var result = new List<string>();
+            var list = new List<string>();
             try
             {
                 using var connection = new SqliteConnection(ConnectionString);
                 connection.Open();
                 using var command = connection.CreateCommand();
-                command.CommandText = "SELECT Name FROM Courses WHERE TeacherId=$tid;";
+                command.CommandText = @"
+                    SELECT Name FROM Courses
+                    WHERE TeacherId=$tid;
+                ";
                 command.Parameters.AddWithValue("$tid", teacherId);
 
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    result.Add(reader.GetString(0));
+                    list.Add(reader.GetString(0));
                 }
             }
-            catch { }
-            return result;
+            catch
+            {
+            }
+            return list;
         }
 
-        // ------------------- 3) STUDENTS CRUD -------------------
+        // ------------------- STUDENTS CRUD -------------------
+
+        /// <summary>
+        /// Nolasa studentus no Students tabulas.
+        /// </summary>
         public static List<Student> GetStudents()
         {
             var list = new List<Student>();
@@ -264,7 +320,7 @@ namespace MansLabojums.Helpers
                 connection.Open();
                 using var command = connection.CreateCommand();
                 command.CommandText = @"
-                    SELECT Id, Name, Surname, Gender, StudentIdNumber 
+                    SELECT Id, Name, Surname, Gender, StudentIdNumber
                     FROM Students;
                 ";
                 using var reader = command.ExecuteReader();
@@ -280,10 +336,15 @@ namespace MansLabojums.Helpers
                     });
                 }
             }
-            catch { }
+            catch
+            {
+            }
             return list;
         }
 
+        /// <summary>
+        /// Pievieno jaunu studentu tabulā.
+        /// </summary>
         public static void AddStudent(string name, string surname, string gender, int studentIdNumber)
         {
             try
@@ -293,17 +354,22 @@ namespace MansLabojums.Helpers
                 using var command = connection.CreateCommand();
                 command.CommandText = @"
                     INSERT INTO Students (Name, Surname, Gender, StudentIdNumber)
-                    VALUES ($n, $s, $g, $sidNum);
+                    VALUES ($n, $s, $g, $num);
                 ";
                 command.Parameters.AddWithValue("$n", name);
                 command.Parameters.AddWithValue("$s", surname);
                 command.Parameters.AddWithValue("$g", gender);
-                command.Parameters.AddWithValue("$sidNum", studentIdNumber);
+                command.Parameters.AddWithValue("$num", studentIdNumber);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
+        /// <summary>
+        /// Atjauno studenta vārdu un uzvārdu pēc ID.
+        /// </summary>
         public static void UpdateStudent(int id, string name, string surname)
         {
             try
@@ -321,9 +387,14 @@ namespace MansLabojums.Helpers
                 command.Parameters.AddWithValue("$id", id);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
+        /// <summary>
+        /// Dzēš studentu pēc Id.
+        /// </summary>
         public static void DeleteStudent(int id)
         {
             try
@@ -331,17 +402,25 @@ namespace MansLabojums.Helpers
                 using var connection = new SqliteConnection(ConnectionString);
                 connection.Open();
                 using var command = connection.CreateCommand();
-                command.CommandText = "DELETE FROM Students WHERE Id=$id;";
+                command.CommandText = @"
+                    DELETE FROM Students WHERE Id=$id;
+                ";
                 command.Parameters.AddWithValue("$id", id);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
-        // ------------------- 4) COURSES CRUD -------------------
+        // ------------------- COURSES CRUD -------------------
+
+        /// <summary>
+        /// Iegūst visus Courses, atgriežot List<Dictionary<string, object>> ar "Id", "Name", "TeacherId".
+        /// </summary>
         public static List<Dictionary<string, object>> GetCourses()
         {
-            var results = new List<Dictionary<string, object>>();
+            var list = new List<Dictionary<string, object>>();
             try
             {
                 using var connection = new SqliteConnection(ConnectionString);
@@ -355,13 +434,18 @@ namespace MansLabojums.Helpers
                     dict["Id"] = reader.GetInt32(0);
                     dict["Name"] = reader.GetString(1);
                     dict["TeacherId"] = reader.GetInt32(2);
-                    results.Add(dict);
+                    list.Add(dict);
                 }
             }
-            catch { }
-            return results;
+            catch
+            {
+            }
+            return list;
         }
 
+        /// <summary>
+        /// Pievieno jaunu kursu (Name, TeacherId).
+        /// </summary>
         public static void AddCourse(string name, int teacherId)
         {
             try
@@ -377,9 +461,14 @@ namespace MansLabojums.Helpers
                 command.Parameters.AddWithValue("$tid", teacherId);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
+        /// <summary>
+        /// Atjauno kursu (Name, TeacherId) pēc ID.
+        /// </summary>
         public static void UpdateCourse(int courseId, string courseName, int teacherId)
         {
             try
@@ -397,9 +486,14 @@ namespace MansLabojums.Helpers
                 command.Parameters.AddWithValue("$id", courseId);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
+        /// <summary>
+        /// Dzēš kursu pēc ID.
+        /// </summary>
         public static void DeleteCourse(int courseId)
         {
             try
@@ -411,11 +505,13 @@ namespace MansLabojums.Helpers
                 command.Parameters.AddWithValue("$id", courseId);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         /// <summary>
-        /// Lai CoursesPage var redzēt TeacherName pie katra kursa
+        /// Iegūst Courses + TeacherName ar JOIN, lai rādītu: "Matemātika, pasniedz Jānis Bērziņš" u.c.
         /// </summary>
         public static List<Dictionary<string, object>> GetCoursesWithTeacherName()
         {
@@ -443,11 +539,17 @@ namespace MansLabojums.Helpers
                     list.Add(dict);
                 }
             }
-            catch { }
+            catch
+            {
+            }
             return list;
         }
 
-        // ------------------- 5) ASSIGNMENTS CRUD -------------------
+        // ------------------- ASSIGNMENTS CRUD -------------------
+
+        /// <summary>
+        /// Nolasa Assignments tabulu, atgriežot List<Assignment>.
+        /// </summary>
         public static List<Assignment> GetAssignments()
         {
             var list = new List<Assignment>();
@@ -455,33 +557,35 @@ namespace MansLabojums.Helpers
             {
                 using var connection = new SqliteConnection(ConnectionString);
                 connection.Open();
-
                 using var command = connection.CreateCommand();
                 command.CommandText = "SELECT Id, Description, Deadline, CourseId FROM Assignments;";
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    var dateStr = reader.GetString(2);
                     list.Add(new Assignment
                     {
                         Id = reader.GetInt32(0),
                         Description = reader.GetString(1),
-                        Deadline = DateTime.Parse(dateStr),
+                        Deadline = DateTime.Parse(reader.GetString(2)),
                         CourseId = reader.GetInt32(3)
                     });
                 }
             }
-            catch { }
+            catch
+            {
+            }
             return list;
         }
 
+        /// <summary>
+        /// Pievieno assignment (Description, Deadline, CourseId).
+        /// </summary>
         public static void AddAssignment(string description, DateTime deadline, int courseId)
         {
             try
             {
                 using var connection = new SqliteConnection(ConnectionString);
                 connection.Open();
-
                 using var command = connection.CreateCommand();
                 command.CommandText = @"
                     INSERT INTO Assignments (Description, Deadline, CourseId)
@@ -492,16 +596,20 @@ namespace MansLabojums.Helpers
                 command.Parameters.AddWithValue("$cid", courseId);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
+        /// <summary>
+        /// Atjauno assignment datus pēc ID.
+        /// </summary>
         public static void UpdateAssignment(int id, string description, DateTime deadline, int courseId)
         {
             try
             {
                 using var connection = new SqliteConnection(ConnectionString);
                 connection.Open();
-
                 using var command = connection.CreateCommand();
                 command.CommandText = @"
                     UPDATE Assignments
@@ -514,67 +622,34 @@ namespace MansLabojums.Helpers
                 command.Parameters.AddWithValue("$id", id);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
+        /// <summary>
+        /// Dzēš assignment pēc ID.
+        /// </summary>
         public static void DeleteAssignment(int id)
         {
             try
             {
                 using var connection = new SqliteConnection(ConnectionString);
                 connection.Open();
-
                 using var command = connection.CreateCommand();
                 command.CommandText = "DELETE FROM Assignments WHERE Id=$id;";
                 command.Parameters.AddWithValue("$id", id);
                 command.ExecuteNonQuery();
             }
-            catch { }
-        }
-
-        // ------------------- 6) SUBMISSIONS CRUD -------------------
-        /// <summary>
-        /// Plašākam scenārijam: (Id, AssignmentDescription, StudentName, SubmissionTime, Score)
-        /// un piesaistīt citiem laukiem, ja vajag
-        /// </summary>
-        public static List<Dictionary<string, object>> GetSubmissions()
-        {
-            var list = new List<Dictionary<string, object>>();
-            try
+            catch
             {
-                using var connection = new SqliteConnection(ConnectionString);
-                connection.Open();
-
-                using var command = connection.CreateCommand();
-                command.CommandText = @"
-                    SELECT s.Id,
-                           a.Description AS AssignmentDescription,
-                           st.Name AS StudentName,
-                           s.SubmissionTime,
-                           s.Score
-                    FROM Submissions s
-                    INNER JOIN Assignments a ON s.AssignmentId = a.Id
-                    INNER JOIN Students st ON s.StudentId = st.Id;
-                ";
-                using var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    var dict = new Dictionary<string, object>();
-                    dict["Id"] = reader.GetInt32(0);
-                    dict["AssignmentDescription"] = reader.GetString(1);
-                    dict["StudentName"] = reader.GetString(2);
-                    dict["SubmissionTime"] = reader.GetString(3);
-                    dict["Score"] = reader.GetInt32(4);
-                    list.Add(dict);
-                }
             }
-            catch { }
-            return list;
         }
 
+        // ------------------- SUBMISSIONS CRUD -------------------
+
         /// <summary>
-        /// Pilnāka versija – (Id, AssignmentId, StudentId, AssignmentDescription, StudentName, SubmissionTime, Score)
-        /// Izmanto SubmissionsPage, lai rādītu un labotu
+        /// Atgriež Submissions ar AssignmentId, StudentId, un citus laukus, izmantojot JOIN ar Assignments un Students.
         /// </summary>
         public static List<Dictionary<string, object>> GetSubmissionsWithIDs()
         {
@@ -611,14 +686,16 @@ namespace MansLabojums.Helpers
                     list.Add(dict);
                 }
             }
-            catch { }
+            catch
+            {
+            }
             return list;
         }
 
         /// <summary>
-        /// Pievieno iesniegumu, meklējot assignment un studentu pēc vārda
+        /// Pievieno iesniegumu (Submissions) pēc ID (AssignmentId, StudentId).
         /// </summary>
-        public static void AddSubmission(string assignmentDescription, string studentName, int score)
+        public static void AddSubmissionByIds(int assignmentId, int studentId, int score)
         {
             try
             {
@@ -628,29 +705,28 @@ namespace MansLabojums.Helpers
                 using var command = connection.CreateCommand();
                 command.CommandText = @"
                     INSERT INTO Submissions (AssignmentId, StudentId, SubmissionTime, Score)
-                    VALUES (
-                        (SELECT Id FROM Assignments WHERE Description=$ad),
-                        (SELECT Id FROM Students WHERE Name=$sn),
-                        $timeNow,
-                        $sc
-                    );
+                    VALUES ($aid, $sid, $tNow, $sc);
                 ";
-                command.Parameters.AddWithValue("$ad", assignmentDescription);
-                command.Parameters.AddWithValue("$sn", studentName);
-                command.Parameters.AddWithValue("$timeNow", DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
+                command.Parameters.AddWithValue("$aid", assignmentId);
+                command.Parameters.AddWithValue("$sid", studentId);
+                command.Parameters.AddWithValue("$tNow", DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
                 command.Parameters.AddWithValue("$sc", score);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
+        /// <summary>
+        /// Atjauno iesniegumu rezultātu (Score) pēc submissionId.
+        /// </summary>
         public static void UpdateSubmission(int submissionId, int newScore)
         {
             try
             {
                 using var connection = new SqliteConnection(ConnectionString);
                 connection.Open();
-
                 using var command = connection.CreateCommand();
                 command.CommandText = @"
                     UPDATE Submissions
@@ -661,22 +737,31 @@ namespace MansLabojums.Helpers
                 command.Parameters.AddWithValue("$id", submissionId);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
+        /// <summary>
+        /// Dzēš iesniegumu pēc submissionId.
+        /// </summary>
         public static void DeleteSubmission(int submissionId)
         {
             try
             {
                 using var connection = new SqliteConnection(ConnectionString);
                 connection.Open();
-
                 using var command = connection.CreateCommand();
-                command.CommandText = "DELETE FROM Submissions WHERE Id=$id;";
+                command.CommandText = @"
+                    DELETE FROM Submissions
+                    WHERE Id=$id;
+                ";
                 command.Parameters.AddWithValue("$id", submissionId);
                 command.ExecuteNonQuery();
             }
-            catch { }
+            catch
+            {
+            }
         }
     }
 }

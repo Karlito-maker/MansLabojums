@@ -1,4 +1,9 @@
-﻿using MansLabojums.Helpers;
+﻿/******************************************************
+ * MansLabojums/Views/CoursesPage.xaml.cs
+ * Kursi. Lai var dzēst "testa datus", pirms Course
+ * dzēšanas šeit dzēsīsim tam piesaistītos Assignments un Submissions.
+ ******************************************************/
+using MansLabojums.Helpers;
 using Microsoft.Maui.Controls;
 using System;
 using System.Collections.ObjectModel;
@@ -8,104 +13,77 @@ namespace MansLabojums.Views
 {
     public partial class CoursesPage : ContentPage
     {
-        // Rādām sarakstā
+        // Kursu attēlošanai sarakstā
         public class CourseDisplay
         {
             public int Id { get; set; }
-            public string CourseLabel { get; set; } = "";
-            public string TeacherLabel { get; set; } = "";
-        }
-
-        // Skolotāju dropdown 
-        public class TeacherItem
-        {
-            public int Id { get; set; }
-            public string TeacherFullName { get; set; } = "";
+            public string DisplayText { get; set; } = "";  // Piemēram "[1] Matemātika"
+            public string TeacherText { get; set; } = "";  // Piemēram "Skolotājs: Anna Kalniņa"
         }
 
         private ObservableCollection<CourseDisplay> _courses = new();
-        private CourseDisplay _selected;
-
-        public ObservableCollection<TeacherItem> TeacherList { get; set; } = new();
-        public TeacherItem SelectedTeacher { get; set; }
+        private CourseDisplay _selectedCourse;
 
         public CoursesPage()
         {
             InitializeComponent();
             CoursesListView.ItemsSource = _courses;
-            BindingContext = this;
         }
 
         protected override void OnAppearing()
         {
             base.OnAppearing();
             LoadCourses();
-            LoadTeachers();
         }
 
         private void LoadCourses()
         {
             _courses.Clear();
-            _selected = null;
+            _selectedCourse = null;
             EditButton.IsEnabled = false;
             DeleteButton.IsEnabled = false;
 
+            // Iegūstam no DB visu "CoursesWithTeacherName"
             var list = DatabaseHelper.GetCoursesWithTeacherName();
-            // sagaidām  "Id", "CourseName", "TeacherName"
+            // sagaidām "Id", "CourseName", "TeacherName"
             foreach (var row in list)
             {
                 int cid = (int)row["Id"];
                 string cname = row["CourseName"].ToString()!;
                 string tname = row["TeacherName"].ToString()!;
+
                 _courses.Add(new CourseDisplay
                 {
                     Id = cid,
-                    CourseLabel = $"[{cid}] {cname}",
-                    TeacherLabel = $"Pasniedz: {tname}"
-                });
-            }
-        }
-
-        private void LoadTeachers()
-        {
-            TeacherList.Clear();
-            var teachers = DatabaseHelper.GetTeachers();
-            foreach (var t in teachers)
-            {
-                TeacherList.Add(new TeacherItem
-                {
-                    Id = t.Id,
-                    TeacherFullName = $"{t.Name} {t.Surname}"
+                    DisplayText = $"[{cid}] {cname}",
+                    TeacherText = $"Skolotājs: {tname}"
                 });
             }
         }
 
         private void OnCourseSelected(object sender, SelectedItemChangedEventArgs e)
         {
-            _selected = (CourseDisplay)e.SelectedItem;
-            bool hasSel = (_selected != null);
+            _selectedCourse = (CourseDisplay)e.SelectedItem;
+            bool hasSel = (_selectedCourse != null);
             EditButton.IsEnabled = hasSel;
             DeleteButton.IsEnabled = hasSel;
         }
 
         private void OnAddCourseClicked(object sender, EventArgs e)
         {
-            string cname = CourseNameEntry.Text?.Trim();
-            if (SelectedTeacher == null)
+            string cName = CourseNameEntry.Text?.Trim();
+            string tIdStr = TeacherIdEntry.Text?.Trim();
+            if (string.IsNullOrEmpty(cName) ||
+                string.IsNullOrEmpty(tIdStr) ||
+                !int.TryParse(tIdStr, out int tid))
             {
-                DisplayAlert("Kļūda", "Izvēlieties skolotāju!", "OK");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(cname))
-            {
-                DisplayAlert("Kļūda", "Nav kursa nosaukums!", "OK");
+                DisplayAlert("Kļūda", "Nepareizi ievadīts kursa nosaukums vai teacherId!", "OK");
                 return;
             }
 
             try
             {
-                DatabaseHelper.AddCourse(cname, SelectedTeacher.Id);
+                DatabaseHelper.AddCourse(cName, tid);
                 ClearAddForm();
                 LoadCourses();
             }
@@ -118,8 +96,7 @@ namespace MansLabojums.Views
         private void ClearAddForm()
         {
             CourseNameEntry.Text = "";
-            SelectedTeacher = null;
-            TeacherPicker.SelectedItem = null;
+            TeacherIdEntry.Text = "";
         }
 
         private void OnCancelAddClicked(object sender, EventArgs e)
@@ -129,28 +106,26 @@ namespace MansLabojums.Views
 
         private async void OnEditCourseClicked(object sender, EventArgs e)
         {
-            if (_selected == null) return;
+            if (_selectedCourse == null) return;
 
-            // Iegūstam ID=??, ierosinām prompt
-            string oldTitle = _selected.CourseLabel; // "[2] Fizika"
-            string newName = await DisplayPromptAsync("Labot kursu", "Jauns nosaukums:", initialValue: oldTitle);
+            // Paņemam info no "[1] Matemātika"
+            string oldLine = _selectedCourse.DisplayText;
+            string newLine = await DisplayPromptAsync("Labot kursu", "Jauns nosaukums (ar ID iekavās, ja gribat)?", initialValue: oldLine);
 
-            // Tagad teacher:
-            // var newTeacherId = ??  -> reāli var parādīt citu picker, bet vienkāršības labad => prompt
-            string newTStr = await DisplayPromptAsync("Labot kursu", "Jauns TeacherId:", initialValue: "1");
+            string newTidStr = await DisplayPromptAsync("Labot kursu", "Jauns teacherId:", initialValue: "1");
 
-            if (!string.IsNullOrEmpty(newName) && int.TryParse(newTStr, out int newTid))
+            if (!string.IsNullOrEmpty(newLine) &&
+                int.TryParse(newTidStr, out int newTid))
             {
-                // Izvelkam ID no oldTitle? 
-                // newName satur “[2] Fizika”, mēs gribam “Fizika”
-                int bracketPos = newName.IndexOf(']');
-                string pureName = (bracketPos >= 0 && bracketPos < newName.Length - 1)
-                                  ? newName.Substring(bracketPos + 1).Trim()
-                                  : newName;
+                // Izlobam kursa nosaukumu
+                int bracketPos = newLine.IndexOf(']');
+                string pureName = (bracketPos >= 0 && bracketPos < newLine.Length - 1)
+                    ? newLine.Substring(bracketPos + 1).Trim()
+                    : newLine;
 
                 try
                 {
-                    DatabaseHelper.UpdateCourse(_selected.Id, pureName, newTid);
+                    DatabaseHelper.UpdateCourse(_selectedCourse.Id, pureName, newTid);
                     LoadCourses();
                 }
                 catch (Exception ex)
@@ -160,16 +135,47 @@ namespace MansLabojums.Views
             }
         }
 
+        // Dzēšam kursu "kaskadēti": 1) dzēšam tam piederīgos uzdevumus un to Submissions
         private async void OnDeleteCourseClicked(object sender, EventArgs e)
         {
-            if (_selected == null) return;
+            if (_selectedCourse == null) return;
 
-            bool confirm = await DisplayAlert("Dzēst kursu?", _selected.CourseLabel, "Jā", "Nē");
+            bool confirm = await DisplayAlert(
+                "Dzēst kursu?",
+                $"Vai tiešām vēlaties dzēst kursu: {_selectedCourse.DisplayText}?",
+                "Jā", "Nē");
+
             if (confirm)
             {
                 try
                 {
-                    DatabaseHelper.DeleteCourse(_selected.Id);
+                    // 1) Iegūstam Assignments, Submissions
+                    var allAssigns = DatabaseHelper.GetAssignments();
+                    var allSubs = DatabaseHelper.GetSubmissionsWithIDs();
+
+                    // 2) atrodam assignmentus, kam CourseId = _selectedCourse.Id
+                    foreach (var a in allAssigns)
+                    {
+                        if (a.CourseId == _selectedCourse.Id)
+                        {
+                            // 3) Dzēšam submission, kas piesaistīti assignmentId = a.Id
+                            foreach (var sd in allSubs)
+                            {
+                                int subAssId = (int)sd["AssignmentId"];
+                                int subId = (int)sd["Id"];
+                                if (subAssId == a.Id)
+                                {
+                                    DatabaseHelper.DeleteSubmission(subId);
+                                }
+                            }
+                            // 4) Dzēšam assignment
+                            DatabaseHelper.DeleteAssignment(a.Id);
+                        }
+                    }
+
+                    // 5) Tagad droši dzēšam course
+                    DatabaseHelper.DeleteCourse(_selectedCourse.Id);
+
                     LoadCourses();
                 }
                 catch (Exception ex)

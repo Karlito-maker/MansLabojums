@@ -13,6 +13,7 @@ namespace MansLabojums.Views
 
         private void OnInitDbClicked(object sender, EventArgs e)
         {
+            // Inicializē DB (tabulas), ja nav jau
             try
             {
                 DatabaseHelper.InitializeDatabase();
@@ -20,12 +21,13 @@ namespace MansLabojums.Views
             }
             catch (Exception ex)
             {
-                DisplayAlert("Kļūda", ex.Message, "Labi");
+                DisplayAlert("Kļūda", ex.Message, "OK");
             }
         }
 
         private void OnSeedDataClicked(object sender, EventArgs e)
         {
+            // Ievadām testa datus, ja tie vēl nav
             try
             {
                 DatabaseHelper.SeedData();
@@ -33,7 +35,7 @@ namespace MansLabojums.Views
             }
             catch (Exception ex)
             {
-                DisplayAlert("Kļūda", ex.Message, "Labi");
+                DisplayAlert("Kļūda", ex.Message, "OK");
             }
         }
 
@@ -41,22 +43,25 @@ namespace MansLabojums.Views
         {
             Navigation.PushAsync(new StudentsPage());
         }
-        private void NavigateToAssignmentsPage(object sender, EventArgs e)
-        {
-            Navigation.PushAsync(new AssignmentsPage());
-        }
-        private void NavigateToSubmissionsPage(object sender, EventArgs e)
-        {
-            Navigation.PushAsync(new SubmissionsPage());
-        }
-        private void NavigateToCoursesPage(object sender, EventArgs e)
-        {
-            Navigation.PushAsync(new CoursesPage());
-        }
+
         private void NavigateToTeachersPage(object sender, EventArgs e)
         {
             Navigation.PushAsync(new TeachersPage());
         }
+
+        private void NavigateToCoursesPage(object sender, EventArgs e)
+        {
+            Navigation.PushAsync(new CoursesPage());
+        }
+
+        private void NavigateToAssignmentsPage(object sender, EventArgs e)
+        {
+            Navigation.PushAsync(new AssignmentsPage());
+        }
+
+        private void NavigateToSubmissionsPage(object sender, EventArgs e)
+        {
+            Navigation.PushAsync(new SubmissionsPage());
+        }
     }
 }
-

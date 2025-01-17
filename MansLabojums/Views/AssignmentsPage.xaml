@@ -1,4 +1,5 @@
 ﻿<!-- MansLabojums/Views/AssignmentsPage.xaml -->
+<!-- Uzdevumu (Assignment) CRUD lapa -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MansLabojums.Views.AssignmentsPage"
@@ -6,15 +7,17 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="12">
+
             <Label Text="Uzdevumu saraksts"
                    FontSize="24"
                    FontAttributes="Bold"
                    HorizontalOptions="Center" />
 
+            <!-- Saraksts ar esošajiem uzdevumiem -->
             <ListView x:Name="AssignmentsListView"
                       SelectionMode="Single"
-                      ItemSelected="OnAssignmentSelected"
-                      HeightRequest="200">
+                      HeightRequest="200"
+                      ItemSelected="OnAssignmentSelected">
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <TextCell Text="{Binding TitleText}"
@@ -23,18 +26,19 @@
                 </ListView.ItemTemplate>
             </ListView>
 
+            <!-- Pogas Labot/Dzēst -->
             <HorizontalStackLayout Spacing="10">
-                <Button Text="Labot"
+                <Button x:Name="EditButton"
+                        Text="Labot"
                         Clicked="OnEditAssignmentClicked"
-                        x:Name="EditButton"
-                        IsEnabled="False" />
-                <Button Text="Dzēst"
+                        IsEnabled="False"/>
+                <Button x:Name="DeleteButton"
+                        Text="Dzēst"
                         Clicked="OnDeleteAssignmentClicked"
-                        x:Name="DeleteButton"
-                        IsEnabled="False" />
+                        IsEnabled="False"/>
             </HorizontalStackLayout>
 
-            <!-- Forma pievienot jaunu assignment -->
+            <!-- Forma jauna uzdevuma (Assignment) pievienošanai -->
             <Frame BackgroundColor="#eeeeee" Padding="10">
                 <VerticalStackLayout Spacing="6">
                     <Label Text="Pievienot uzdevumu"
@@ -42,18 +46,18 @@
                            HorizontalOptions="Center" />
 
                     <Entry x:Name="DescriptionEntry"
-                           Placeholder="Uzdevuma apraksts" />
+                           Placeholder="Apraksts (piem. Algebras mājasdarbs)" />
                     <Entry x:Name="DeadlineEntry"
-                           Placeholder="Deadline (YYYY-MM-DD)"/>
-                    <!-- Kursa izvēle ar Picker -->
-                    <Picker x:Name="CoursePicker"
-                            Title="Izvēlieties kursu"
-                            ItemsSource="{Binding CourseList}"
-                            ItemDisplayBinding="{Binding CourseName}"
-                            SelectedItem="{Binding SelectedCourse}" />
+                           Placeholder="Termiņš (YYYY-MM-DD)" />
+
+                    <!-- Šeit varat ielikt CoursePicker, ja vēlaties dropdown kursiem,
+                         šobrīd šim piemēram atstājam int CourseId ievadi -->
+                    <Entry x:Name="CourseIdEntry"
+                           Placeholder="Kursa ID (skaitlis)"
+                           Keyboard="Numeric" />
 
                     <HorizontalStackLayout Spacing="10">
-                        <Button Text="Pievienot" 
+                        <Button Text="Pievienot"
                                 Clicked="OnAddAssignmentClicked"/>
                         <Button Text="Cancel"
                                 Clicked="OnCancelAddClicked"/>
@@ -62,5 +66,4 @@
             </Frame>
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

@@ -1,5 +1,4 @@
-﻿<!-- MansLabojums/Views/StudentsPage.xaml -->
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MansLabojums.Views.StudentsPage"
              Title="Studenti">
@@ -24,19 +23,18 @@
                 </ListView.ItemTemplate>
             </ListView>
 
-            <!-- CRUD pogas (labot/dzēst) -->
             <HorizontalStackLayout Spacing="10">
-                <Button Text="Labot"
+                <Button x:Name="EditButton"
+                        Text="Labot"
                         Clicked="OnEditStudentClicked"
-                        x:Name="EditButton"
-                        IsEnabled="False" />
-                <Button Text="Dzēst"
+                        IsEnabled="False"/>
+                <Button x:Name="DeleteButton"
+                        Text="Dzēst"
                         Clicked="OnDeleteStudentClicked"
-                        x:Name="DeleteButton"
-                        IsEnabled="False" />
+                        IsEnabled="False"/>
             </HorizontalStackLayout>
 
-            <!-- Pievienošanas forma ar Cancel -->
+            <!-- Forma jauna studenta pievienošanai -->
             <Frame BackgroundColor="#eeeeee" Padding="10">
                 <VerticalStackLayout Spacing="6">
                     <Label Text="Pievienot studentu"
@@ -58,18 +56,17 @@
                     </Picker>
                     <Entry x:Name="IdNumberEntry"
                            Placeholder="StudentIdNumber"
-                           Keyboard="Numeric"/>
+                           Keyboard="Numeric" />
 
                     <HorizontalStackLayout Spacing="10">
-                        <Button Text="Pievienot" 
-                                Clicked="OnAddStudentClicked" />
+                        <Button Text="Pievienot"
+                                Clicked="OnAddStudentClicked"/>
                         <Button Text="Cancel"
-                                Clicked="OnCancelAddClicked" />
+                                Clicked="OnCancelAddClicked"/>
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Frame>
 
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

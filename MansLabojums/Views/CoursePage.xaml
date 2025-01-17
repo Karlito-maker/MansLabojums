@@ -1,4 +1,5 @@
 ﻿<!-- MansLabojums/Views/CoursesPage.xaml -->
+<!-- Kursu (Course) CRUD lapa -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MansLabojums.Views.CoursesPage"
@@ -14,28 +15,29 @@
 
             <ListView x:Name="CoursesListView"
                       SelectionMode="Single"
-                      ItemSelected="OnCourseSelected"
-                      HeightRequest="200">
+                      HeightRequest="200"
+                      ItemSelected="OnCourseSelected">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <TextCell Text="{Binding CourseLabel}"
-                                  Detail="{Binding TeacherLabel}" />
+                        <TextCell Text="{Binding DisplayText}"
+                                  Detail="{Binding TeacherText}" />
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
 
+            <!-- Pogas labot/dzēst -->
             <HorizontalStackLayout Spacing="10">
-                <Button Text="Labot"
+                <Button x:Name="EditButton"
+                        Text="Labot"
                         Clicked="OnEditCourseClicked"
-                        x:Name="EditButton"
                         IsEnabled="False"/>
-                <Button Text="Dzēst"
+                <Button x:Name="DeleteButton"
+                        Text="Dzēst"
                         Clicked="OnDeleteCourseClicked"
-                        x:Name="DeleteButton"
                         IsEnabled="False"/>
             </HorizontalStackLayout>
 
-            <!-- Pievienot kursu -->
+            <!-- Forma jaunu kursu pievienošanai -->
             <Frame BackgroundColor="#eeeeee" Padding="10">
                 <VerticalStackLayout Spacing="6">
                     <Label Text="Pievienot kursu"
@@ -43,25 +45,20 @@
                            HorizontalOptions="Center" />
 
                     <Entry x:Name="CourseNameEntry"
-                           Placeholder="Kursa nosaukums" />
-
-                    <!-- Skolotāja dropdown -->
-                    <Picker x:Name="TeacherPicker"
-                            Title="Izvēlieties skolotāju"
-                            ItemsSource="{Binding TeacherList}"
-                            ItemDisplayBinding="{Binding TeacherFullName}"
-                            SelectedItem="{Binding SelectedTeacher}" />
+                           Placeholder="Kursa nosaukums (piem. Bioloģija)" />
+                    <Entry x:Name="TeacherIdEntry"
+                           Placeholder="Skolotāja ID (skaitlis)"
+                           Keyboard="Numeric" />
 
                     <HorizontalStackLayout Spacing="10">
                         <Button Text="Pievienot"
-                                Clicked="OnAddCourseClicked" />
+                                Clicked="OnAddCourseClicked"/>
                         <Button Text="Cancel"
-                                Clicked="OnCancelAddClicked" />
+                                Clicked="OnCancelAddClicked"/>
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Frame>
 
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

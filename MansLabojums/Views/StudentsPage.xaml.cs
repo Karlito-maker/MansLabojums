@@ -1,17 +1,14 @@
-﻿/******************************************************
- * MansLabojums/Views/StudentsPage.xaml.cs
- * Pēdējā (jaunākā) pilnā versija
- ******************************************************/
-using MansLabojums.Helpers;
+﻿using MansLabojums.Helpers;
 using Microsoft.Maui.Controls;
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 
 namespace MansLabojums.Views
 {
     public partial class StudentsPage : ContentPage
     {
-        // Modelis, ko rādām sarakstā
+        // Modelis saraksta attēlošanai
         public class StudentDisplay
         {
             public int Id { get; set; }
@@ -20,7 +17,7 @@ namespace MansLabojums.Views
         }
 
         private ObservableCollection<StudentDisplay> _students = new();
-        private StudentDisplay _selectedStudent; // pašlaik atlasītais
+        private StudentDisplay _selectedStudent;
 
         public StudentsPage()
         {
@@ -34,12 +31,15 @@ namespace MansLabojums.Views
             LoadStudents();
         }
 
-        // Atjauno studentu sarakstu
+        // Nolasām studentus no DB un ieliekam sarakstā
         private void LoadStudents()
         {
             _students.Clear();
-            // No DatabaseHelper dabūjam studentu sarakstu
-            var list = DatabaseHelper.GetStudents();
+            _selectedStudent = null;
+            EditButton.IsEnabled = false;
+            DeleteButton.IsEnabled = false;
+
+            var list = DatabaseHelper.GetStudents(); // atgriež List<Student>
             foreach (var s in list)
             {
                 _students.Add(new StudentDisplay
@@ -49,25 +49,17 @@ namespace MansLabojums.Views
                     IdNumberText = "ID# " + s.StudentIdNumber
                 });
             }
-
-            // Atiestatām atlasīto studentu
-            StudentsListView.SelectedItem = null;
-            EditButton.IsEnabled = false;
-            DeleteButton.IsEnabled = false;
-            _selectedStudent = null;
         }
 
-        // Kad lietotājs sarakstā izvēlas studentu
         private void OnStudentSelected(object sender, SelectedItemChangedEventArgs e)
         {
             _selectedStudent = (StudentDisplay)e.SelectedItem;
-            bool hasSelection = (_selectedStudent != null);
-
-            EditButton.IsEnabled = hasSelection;
-            DeleteButton.IsEnabled = hasSelection;
+            bool hasSel = (_selectedStudent != null);
+            EditButton.IsEnabled = hasSel;
+            DeleteButton.IsEnabled = hasSel;
         }
 
-        // Pievienot jaunu studentu
+        // Pievienojam jaunu studentu
         private void OnAddStudentClicked(object sender, EventArgs e)
         {
             string name = NameEntry.Text?.Trim();
@@ -75,7 +67,7 @@ namespace MansLabojums.Views
             string gender = GenderPicker.SelectedItem as string;
             string idNumStr = IdNumberEntry.Text?.Trim();
 
-            // Pārbaudām vai ievades lauki ir korekti
+            // Pārbaudām ievades laukus
             if (string.IsNullOrEmpty(name) ||
                 string.IsNullOrEmpty(surname) ||
                 string.IsNullOrEmpty(gender) ||
@@ -98,7 +90,6 @@ namespace MansLabojums.Views
             }
         }
 
-        // Iztīram formu
         private void ClearAddForm()
         {
             NameEntry.Text = "";
@@ -107,17 +98,16 @@ namespace MansLabojums.Views
             IdNumberEntry.Text = "";
         }
 
-        // “Cancel” poga formā
         private void OnCancelAddClicked(object sender, EventArgs e)
         {
             ClearAddForm();
         }
 
-        // Labot atlasīto studentu
         private async void OnEditStudentClicked(object sender, EventArgs e)
         {
             if (_selectedStudent == null) return;
 
+            // Pašreizējie lauki
             string[] nm = _selectedStudent.FullName.Split(' ');
             string oldName = (nm.Length > 0) ? nm[0] : "";
             string oldSurname = (nm.Length > 1) ? nm[1] : "";
@@ -139,17 +129,37 @@ namespace MansLabojums.Views
             }
         }
 
-        // Dzēst atlasīto studentu
+        // Dzēšam studentu, pirms tam dzēšam visas Submissions, kas atsaucas uz šo studentu
         private async void OnDeleteStudentClicked(object sender, EventArgs e)
         {
             if (_selectedStudent == null) return;
 
-            bool confirm = await DisplayAlert("Dzēst studentu?", _selectedStudent.FullName, "Jā", "Nē");
+            bool confirm = await DisplayAlert(
+                "Dzēst studentu?",
+                $"Vai tiešām vēlaties dzēst: {_selectedStudent.FullName}?",
+                "Jā", "Nē");
+
             if (confirm)
             {
                 try
                 {
+                    // 1) Iegūstam visus Submissions
+                    var subs = DatabaseHelper.GetSubmissionsWithIDs();
+                    // 2) Atliek atrast tos, kuru StudentId = _selectedStudent.Id
+                    foreach (var dict in subs)
+                    {
+                        int stId = (int)dict["StudentId"];
+                        int subId = (int)dict["Id"];
+                        if (stId == _selectedStudent.Id)
+                        {
+                            // Dzēšam iesniegumu
+                            DatabaseHelper.DeleteSubmission(subId);
+                        }
+                    }
+
+                    // Tagad droši var dzēst studentu
                     DatabaseHelper.DeleteStudent(_selectedStudent.Id);
+
                     LoadStudents();
                 }
                 catch (Exception ex)
@@ -160,4 +170,3 @@ namespace MansLabojums.Views
         }
     }
 }
-

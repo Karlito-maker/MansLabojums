@@ -1,5 +1,4 @@
-﻿<!-- MansLabojums/Views/MainPage.xaml -->
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MansLabojums.Views.MainPage"
              Title="Galvenā lapa">
@@ -37,20 +36,14 @@
                            FontSize="18"
                            HorizontalOptions="Center" />
 
-                    <Button Text="Studenti"
-                            Clicked="NavigateToStudentsPage" />
-                    <Button Text="Uzdevumi"
-                            Clicked="NavigateToAssignmentsPage" />
-                    <Button Text="Iesniegumi"
-                            Clicked="NavigateToSubmissionsPage" />
-                    <Button Text="Kursi"
-                            Clicked="NavigateToCoursesPage" />
-                    <Button Text="Pasniedzēji"
-                            Clicked="NavigateToTeachersPage" />
+                    <Button Text="Studenti" Clicked="NavigateToStudentsPage"/>
+                    <Button Text="Pasniedzēji" Clicked="NavigateToTeachersPage"/>
+                    <Button Text="Kursi" Clicked="NavigateToCoursesPage"/>
+                    <Button Text="Uzdevumi" Clicked="NavigateToAssignmentsPage"/>
+                    <Button Text="Iesniegumi" Clicked="NavigateToSubmissionsPage"/>
                 </VerticalStackLayout>
             </Frame>
 
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

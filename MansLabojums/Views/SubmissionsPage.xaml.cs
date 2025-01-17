@@ -1,5 +1,9 @@
-﻿using MansLabojums.Helpers;
+﻿/******************************************************
+ * MansLabojums/Views/SubmissionsPage.xaml.cs
+ * Pilnīgs variants ar ID pieeju Submissions
+ ******************************************************/
 using Microsoft.Maui.Controls;
+using MansLabojums.Helpers;
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
@@ -8,37 +12,42 @@ namespace MansLabojums.Views
 {
     public partial class SubmissionsPage : ContentPage
     {
+        // Dati sarakstam
         public class SubmissionDisplay
         {
             public int Id { get; set; }
+            public int AssignmentId { get; set; }
+            public int StudentId { get; set; }
             public string AssignmentDescription { get; set; } = "";
             public string StudentName { get; set; } = "";
             public string SubmissionTime { get; set; } = "";
             public int Score { get; set; }
-            // lai var rādīt
+
             public string DisplayTitle => $"[{Id}] {AssignmentDescription}";
             public string DisplayDetail => $"Student: {StudentName}, Score={Score}, {SubmissionTime}";
         }
 
-        // Picker: assignment
+        // Picker items
         public class AssignmentItem
         {
             public int Id { get; set; }
-            public string AssignmentDesc { get; set; } = "";
+            public string DisplayText { get; set; } = ""; // ex: "[1] Algebras mājas darbs"
         }
-        // Picker: student
         public class StudentItem
         {
             public int Id { get; set; }
-            public string StudentName { get; set; } = "";
+            public string DisplayText { get; set; } = ""; // ex: "[2] Ilze Liepa"
         }
 
+        // Kolekcijas
         private ObservableCollection<SubmissionDisplay> _subs = new();
-        private SubmissionDisplay _selectedSub;
-
         public ObservableCollection<AssignmentItem> AssignmentList { get; set; } = new();
         public ObservableCollection<StudentItem> StudentList { get; set; } = new();
 
+        // Atlase
+        private SubmissionDisplay _selectedSub;
+
+        // Atlase no pickeriem
         public AssignmentItem SelectedAssignment { get; set; }
         public StudentItem SelectedStudent { get; set; }
 
@@ -57,6 +66,7 @@ namespace MansLabojums.Views
             LoadStudents();
         }
 
+        // Ielasa esošos Submissions no DB
         private void LoadSubmissions()
         {
             _subs.Clear();
@@ -65,19 +75,24 @@ namespace MansLabojums.Views
             DeleteButton.IsEnabled = false;
 
             var list = DatabaseHelper.GetSubmissionsWithIDs();
-            foreach (var dict in list)
+            // satur: "Id", "AssignmentId", "StudentId", "AssignmentDescription", "StudentName", "SubmissionTime", "Score"
+
+            foreach (var row in list)
             {
                 _subs.Add(new SubmissionDisplay
                 {
-                    Id = (int)dict["Id"],
-                    AssignmentDescription = dict["AssignmentDescription"].ToString()!,
-                    StudentName = dict["StudentName"].ToString()!,
-                    SubmissionTime = dict["SubmissionTime"].ToString()!,
-                    Score = (int)dict["Score"]
+                    Id = (int)row["Id"],
+                    AssignmentId = (int)row["AssignmentId"],
+                    StudentId = (int)row["StudentId"],
+                    AssignmentDescription = row["AssignmentDescription"].ToString()!,
+                    StudentName = row["StudentName"].ToString()!,
+                    SubmissionTime = row["SubmissionTime"].ToString()!,
+                    Score = (int)row["Score"]
                 });
             }
         }
 
+        // Ielasa assignment ID un description, lai var atlasīt
         private void LoadAssignments()
         {
             AssignmentList.Clear();
@@ -87,11 +102,12 @@ namespace MansLabojums.Views
                 AssignmentList.Add(new AssignmentItem
                 {
                     Id = a.Id,
-                    AssignmentDesc = $"[{a.Id}] {a.Description}"
+                    DisplayText = $"[{a.Id}] {a.Description}"
                 });
             }
         }
 
+        // Ielasa studentus
         private void LoadStudents()
         {
             StudentList.Clear();
@@ -101,7 +117,7 @@ namespace MansLabojums.Views
                 StudentList.Add(new StudentItem
                 {
                     Id = s.Id,
-                    StudentName = $"[{s.Id}] {s.Name} {s.Surname}"
+                    DisplayText = $"[{s.Id}] {s.Name} {s.Surname}"
                 });
             }
         }
@@ -114,6 +130,7 @@ namespace MansLabojums.Views
             DeleteButton.IsEnabled = hasSel;
         }
 
+        // Pievienot, izmantojot ID – drošāk, nekā ar vārdiem
         private void OnAddSubmissionClicked(object sender, EventArgs e)
         {
             if (SelectedAssignment == null || SelectedStudent == null)
@@ -125,21 +142,19 @@ namespace MansLabojums.Views
             string scStr = ScoreEntry.Text?.Trim();
             if (!int.TryParse(scStr, out int sc))
             {
-                DisplayAlert("Kļūda", "Ievadiet derīgu skaitli Score!", "OK");
+                DisplayAlert("Kļūda", "Ievadiet derīgu skaitlisku Score!", "OK");
                 return;
             }
 
             try
             {
-                // Mūsu DBHelper meklē uzdevumu pēc description, studentu pēc Name
-                // Tāpēc atdalīsim desc => "Kustības vienādojumi" no "[2]" 
-                string[] aSplit = SelectedAssignment.AssignmentDesc.Split(']');
-                string pureDesc = (aSplit.Length > 1) ? aSplit[1].Trim() : "???";
+                // Tagad tieši ID:
+                DatabaseHelper.AddSubmissionByIds(
+                    SelectedAssignment.Id,
+                    SelectedStudent.Id,
+                    sc
+                );
 
-                string[] sSplit = SelectedStudent.StudentName.Split(']');
-                string pureStudent = (sSplit.Length > 1) ? sSplit[1].Trim() : "???";
-
-                DatabaseHelper.AddSubmission(pureDesc, pureStudent, sc);
                 ClearAddForm();
                 LoadSubmissions();
             }
@@ -163,12 +178,14 @@ namespace MansLabojums.Views
             ClearAddForm();
         }
 
+        // Labot – šeit tikai Score labojam
         private async void OnEditSubmissionClicked(object sender, EventArgs e)
         {
             if (_selectedSub == null) return;
 
-            string oldScore = _selectedSub.Score.ToString();
-            string newScoreStr = await DisplayPromptAsync("Labot iesniegumu", "Jauns rezultāts:", initialValue: oldScore);
+            string oldScoreStr = _selectedSub.Score.ToString();
+            string newScoreStr = await DisplayPromptAsync("Labot iesniegumu", "Jauns rezultāts:", initialValue: oldScoreStr);
+
             if (int.TryParse(newScoreStr, out int newScr))
             {
                 try

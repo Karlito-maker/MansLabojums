@@ -3,17 +3,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MansLabojums.Views.SubmissionsPage"
              Title="Iesniegumi">
+
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="12">
+
             <Label Text="Iesniegumu saraksts"
                    FontSize="24"
                    FontAttributes="Bold"
                    HorizontalOptions="Center" />
 
+            <!-- Esošo iesniegumu saraksts -->
             <ListView x:Name="SubmissionsListView"
                       SelectionMode="Single"
                       ItemSelected="OnSubmissionSelected"
-                      HeightRequest="200">
+                      HeightRequest="220">
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <TextCell Text="{Binding DisplayTitle}"
@@ -22,51 +25,72 @@
                 </ListView.ItemTemplate>
             </ListView>
 
+            <!-- Labot / Dzēst pogas -->
             <HorizontalStackLayout Spacing="10">
                 <Button Text="Labot"
-                        Clicked="OnEditSubmissionClicked"
                         x:Name="EditButton"
-                        IsEnabled="False"/>
+                        Clicked="OnEditSubmissionClicked"
+                        IsEnabled="False" />
                 <Button Text="Dzēst"
-                        Clicked="OnDeleteSubmissionClicked"
                         x:Name="DeleteButton"
-                        IsEnabled="False"/>
+                        Clicked="OnDeleteSubmissionClicked"
+                        IsEnabled="False" />
             </HorizontalStackLayout>
 
-            <!-- Pievienot iesniegumu forma -->
+            <!-- Forma jaunu iesniegumu ievadei -->
             <Frame BackgroundColor="#eeeeee" Padding="10">
                 <VerticalStackLayout Spacing="6">
-                    <Label Text="Pievienot iesniegumu"
+                    <Label Text="Pievienot jaunu iesniegumu"
                            FontAttributes="Bold"
                            HorizontalOptions="Center" />
 
-                    <!-- Uzdevums -->
-                    <Picker x:Name="AssignmentPicker"
-                            Title="Izvēlieties uzdevumu"
-                            ItemsSource="{Binding AssignmentList}"
-                            ItemDisplayBinding="{Binding AssignmentDesc}"
-                            SelectedItem="{Binding SelectedAssignment}" />
+                    <!-- Assignment Picker -->
+                    <HorizontalStackLayout>
+                        <Label Text="Uzdevums:"
+                               VerticalTextAlignment="Center"
+                               WidthRequest="90"/>
+                        <Picker x:Name="AssignmentPicker"
+                                Title="Izvēlieties uzdevumu"
+                                ItemsSource="{Binding AssignmentList}"
+                                ItemDisplayBinding="{Binding DisplayText}"
+                                SelectedItem="{Binding SelectedAssignment}"
+                                HorizontalOptions="FillAndExpand"/>
+                    </HorizontalStackLayout>
 
-                    <!-- Students -->
-                    <Picker x:Name="StudentPicker"
-                            Title="Izvēlieties studentu"
-                            ItemsSource="{Binding StudentList}"
-                            ItemDisplayBinding="{Binding StudentName}"
-                            SelectedItem="{Binding SelectedStudent}" />
+                    <!-- Student Picker -->
+                    <HorizontalStackLayout>
+                        <Label Text="Students:"
+                               VerticalTextAlignment="Center"
+                               WidthRequest="90"/>
+                        <Picker x:Name="StudentPicker"
+                                Title="Izvēlieties studentu"
+                                ItemsSource="{Binding StudentList}"
+                                ItemDisplayBinding="{Binding DisplayText}"
+                                SelectedItem="{Binding SelectedStudent}"
+                                HorizontalOptions="FillAndExpand"/>
+                    </HorizontalStackLayout>
 
-                    <!-- Score -->
-                    <Entry x:Name="ScoreEntry"
-                           Placeholder="Rezultāts (Score)"
-                           Keyboard="Numeric" />
+                    <!-- Score ievade -->
+                    <HorizontalStackLayout>
+                        <Label Text="Rezultāts:"
+                               VerticalTextAlignment="Center"
+                               WidthRequest="90"/>
+                        <Entry x:Name="ScoreEntry"
+                               Keyboard="Numeric"
+                               HorizontalOptions="FillAndExpand"/>
+                    </HorizontalStackLayout>
 
+                    <!-- Pievienot + Cancel -->
                     <HorizontalStackLayout Spacing="10">
-                        <Button Text="Pievienot"
+                        <Button Text="Pievienot iesniegumu"
                                 Clicked="OnAddSubmissionClicked"/>
                         <Button Text="Cancel"
                                 Clicked="OnCancelAddClicked"/>
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Frame>
+
         </VerticalStackLayout>
     </ScrollView>
+
 </ContentPage>
