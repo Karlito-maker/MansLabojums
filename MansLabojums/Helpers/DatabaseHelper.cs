@@ -1,9 +1,4 @@
-﻿/******************************************************
- * MansLabojums/Helpers/DatabaseHelper.cs
- * PILNĀ VERSIJA AR `GetCoursesByTeacherId(...)`
- * LATVISKIE KOMENTĀRI IEKĻAUTI
- ******************************************************/
-
+﻿
 using Microsoft.Data.Sqlite;
 using MansLabojums.Models;
 using System;
@@ -13,10 +8,10 @@ using System.Linq;
 
 namespace MansLabojums.Helpers
 {
-    /// <summary>
-    /// Šī statiskā klase nodrošina CRUD un citas darbības ar datubāzi,
-    /// izmantojot SQLite un piekļuvi no .NET MAUI lietotnes.
-    /// </summary>
+  
+    // Šī statiskā klase nodrošina CRUD un citas darbības ar datubāzi,
+    // izmantojot SQLite un piekļuvi no .NET MAUI lietotnes.
+
     public static class DatabaseHelper
     {
         // Savienojuma virkne tiek iegūta no ConfigHelper, kur to lasa no faila
@@ -24,10 +19,10 @@ namespace MansLabojums.Helpers
 
         // ------------------- 1) Datubāzes inicializācija un testa datu ievade -------------------
 
-        /// <summary>
-        /// Izveido tabulas (ja tādas vēl nav), iestata foreign_keys=ON, 
-        /// lai var izmantot ārējās atslēgas un (ja konfigurēts) ON DELETE CASCADE.
-        /// </summary>
+
+        // Izveido tabulas (ja tādas vēl nav).
+       
+        
         public static void InitializeDatabase()
         {
             try
@@ -62,7 +57,7 @@ namespace MansLabojums.Helpers
                 );";
                 command.ExecuteNonQuery();
 
-                // Courses tabula (var pievienot ON DELETE CASCADE, ja gribas automātisku kaskādes dzēšanu)
+                // Courses tabula 
                 command.CommandText = @"
                 CREATE TABLE IF NOT EXISTS Courses (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -102,9 +97,9 @@ namespace MansLabojums.Helpers
             }
         }
 
-        /// <summary>
-        /// Ievada testa datus Teachers, Students, Courses, Assignments, Submissions tabulās (ja tie vēl nav).
-        /// </summary>
+        
+        // Ievada testa datus Teachers, Students, Courses, Assignments, Submissions tabulās (ja tie vēl nav).
+     
         public static void SeedData()
         {
             try
@@ -170,9 +165,9 @@ namespace MansLabojums.Helpers
 
         // ------------------- TEACHERS CRUD -------------------
 
-        /// <summary>
-        /// Nolasa visus Teacher ierakstus no Teachers tabulas un atgriež List<Teacher>.
-        /// </summary>
+        
+        // Nolasa visus Teacher ierakstus no Teachers tabulas un atgriež List<Teacher>.
+    
         public static List<Teacher> GetTeachers()
         {
             var list = new List<Teacher>();
@@ -200,14 +195,14 @@ namespace MansLabojums.Helpers
             }
             catch
             {
-                // Ja rodas kļūda, var logot vai rīkoties citādi
+                
             }
             return list;
         }
 
-        /// <summary>
-        /// Pievieno jaunu Teacher tabulā.
-        /// </summary>
+       
+        // Pievieno jaunu Teacher tabulā.
+       
         public static void AddTeacher(string name, string surname, string gender, string contractDate)
         {
             try
@@ -227,13 +222,13 @@ namespace MansLabojums.Helpers
             }
             catch
             {
-                // Klusi apēdam kļūdu vai logojam
+                
             }
         }
 
-        /// <summary>
-        /// Atjauno teacher datus (Name, Surname, Gender, ContractDate) pēc Id.
-        /// </summary>
+        
+        // Atjauno teacher datus (Name, Surname, Gender, ContractDate) pēc Id.
+      
         public static void UpdateTeacher(int id, string name, string surname, string gender, string contractDate)
         {
             try
@@ -258,9 +253,9 @@ namespace MansLabojums.Helpers
             }
         }
 
-        /// <summary>
-        /// Dzēš teacher rindu pēc Id.
-        /// </summary>
+        
+        // Dzēš teacher rindu pēc Id.
+        
         public static void DeleteTeacher(int id)
         {
             try
@@ -277,9 +272,9 @@ namespace MansLabojums.Helpers
             }
         }
 
-        /// <summary>
-        /// Atgriež vienkāršu sarakstu ar kursu nosaukumiem, kas pieder teacherId. Noder, lai parādītu "Kursi: X, Y, Z".
-        /// </summary>
+        
+        // Atgriež vienkāršu sarakstu ar kursu nosaukumiem, kas pieder teacherId. 
+        
         public static List<string> GetCoursesByTeacherId(int teacherId)
         {
             var list = new List<string>();
@@ -308,9 +303,9 @@ namespace MansLabojums.Helpers
 
         // ------------------- STUDENTS CRUD -------------------
 
-        /// <summary>
-        /// Nolasa studentus no Students tabulas.
-        /// </summary>
+
+        // Nolasa studentus no Students tabulas.
+        
         public static List<Student> GetStudents()
         {
             var list = new List<Student>();
@@ -342,9 +337,9 @@ namespace MansLabojums.Helpers
             return list;
         }
 
-        /// <summary>
-        /// Pievieno jaunu studentu tabulā.
-        /// </summary>
+        
+        // Pievieno jaunu studentu tabulā.
+      
         public static void AddStudent(string name, string surname, string gender, int studentIdNumber)
         {
             try
@@ -367,9 +362,9 @@ namespace MansLabojums.Helpers
             }
         }
 
-        /// <summary>
-        /// Atjauno studenta vārdu un uzvārdu pēc ID.
-        /// </summary>
+       
+        // Atjauno studenta vārdu un uzvārdu pēc ID.
+        
         public static void UpdateStudent(int id, string name, string surname)
         {
             try
@@ -392,9 +387,9 @@ namespace MansLabojums.Helpers
             }
         }
 
-        /// <summary>
-        /// Dzēš studentu pēc Id.
-        /// </summary>
+        
+        // Dzēš studentu pēc Id.
+       
         public static void DeleteStudent(int id)
         {
             try
@@ -415,9 +410,9 @@ namespace MansLabojums.Helpers
 
         // ------------------- COURSES CRUD -------------------
 
-        /// <summary>
-        /// Iegūst visus Courses, atgriežot List<Dictionary<string, object>> ar "Id", "Name", "TeacherId".
-        /// </summary>
+       
+        // Iegūst visus Courses.
+        
         public static List<Dictionary<string, object>> GetCourses()
         {
             var list = new List<Dictionary<string, object>>();
@@ -443,9 +438,9 @@ namespace MansLabojums.Helpers
             return list;
         }
 
-        /// <summary>
-        /// Pievieno jaunu kursu (Name, TeacherId).
-        /// </summary>
+        
+        // Pievieno jaunu kursu.
+        
         public static void AddCourse(string name, int teacherId)
         {
             try
@@ -466,9 +461,9 @@ namespace MansLabojums.Helpers
             }
         }
 
-        /// <summary>
-        /// Atjauno kursu (Name, TeacherId) pēc ID.
-        /// </summary>
+        
+        // Atjauno kursu (Name, TeacherId) pēc ID.
+       
         public static void UpdateCourse(int courseId, string courseName, int teacherId)
         {
             try
@@ -491,9 +486,9 @@ namespace MansLabojums.Helpers
             }
         }
 
-        /// <summary>
-        /// Dzēš kursu pēc ID.
-        /// </summary>
+        
+        // Dzēš kursu pēc ID.
+    
         public static void DeleteCourse(int courseId)
         {
             try
@@ -510,9 +505,9 @@ namespace MansLabojums.Helpers
             }
         }
 
-        /// <summary>
-        /// Iegūst Courses + TeacherName ar JOIN, lai rādītu: "Matemātika, pasniedz Jānis Bērziņš" u.c.
-        /// </summary>
+       
+        // Iegūst Courses + TeacherName ar JOIN, lai izmet: "Matemātika, pasniedz Jānis Bērziņš" vai kau ko citu.
+        
         public static List<Dictionary<string, object>> GetCoursesWithTeacherName()
         {
             var list = new List<Dictionary<string, object>>();
@@ -547,9 +542,9 @@ namespace MansLabojums.Helpers
 
         // ------------------- ASSIGNMENTS CRUD -------------------
 
-        /// <summary>
-        /// Nolasa Assignments tabulu, atgriežot List<Assignment>.
-        /// </summary>
+       
+        // Nolasa Assignments tabulu.
+      
         public static List<Assignment> GetAssignments()
         {
             var list = new List<Assignment>();
@@ -577,9 +572,9 @@ namespace MansLabojums.Helpers
             return list;
         }
 
-        /// <summary>
-        /// Pievieno assignment (Description, Deadline, CourseId).
-        /// </summary>
+        
+        // Pievieno assignment (Description, Deadline, CourseId).
+      
         public static void AddAssignment(string description, DateTime deadline, int courseId)
         {
             try
@@ -601,9 +596,9 @@ namespace MansLabojums.Helpers
             }
         }
 
-        /// <summary>
-        /// Atjauno assignment datus pēc ID.
-        /// </summary>
+      
+        // Atjauno assignment datus pēc ID.
+        
         public static void UpdateAssignment(int id, string description, DateTime deadline, int courseId)
         {
             try
@@ -627,9 +622,9 @@ namespace MansLabojums.Helpers
             }
         }
 
-        /// <summary>
-        /// Dzēš assignment pēc ID.
-        /// </summary>
+        
+        // Dzēš assignment pēc ID.
+       
         public static void DeleteAssignment(int id)
         {
             try
@@ -648,9 +643,9 @@ namespace MansLabojums.Helpers
 
         // ------------------- SUBMISSIONS CRUD -------------------
 
-        /// <summary>
-        /// Atgriež Submissions ar AssignmentId, StudentId, un citus laukus, izmantojot JOIN ar Assignments un Students.
-        /// </summary>
+        
+        // Atgriež Submissions ar AssignmentId, StudentId, un citus laukus.
+       
         public static List<Dictionary<string, object>> GetSubmissionsWithIDs()
         {
             var list = new List<Dictionary<string, object>>();
@@ -692,9 +687,9 @@ namespace MansLabojums.Helpers
             return list;
         }
 
-        /// <summary>
-        /// Pievieno iesniegumu (Submissions) pēc ID (AssignmentId, StudentId).
-        /// </summary>
+       
+        // Pievieno iesniegumu (Submissions) pēc ID (AssignmentId, StudentId).
+       
         public static void AddSubmissionByIds(int assignmentId, int studentId, int score)
         {
             try
@@ -718,9 +713,9 @@ namespace MansLabojums.Helpers
             }
         }
 
-        /// <summary>
-        /// Atjauno iesniegumu rezultātu (Score) pēc submissionId.
-        /// </summary>
+        
+        // Atjauno iesniegumu rezultātu (Score) pēc submissionId.
+  
         public static void UpdateSubmission(int submissionId, int newScore)
         {
             try
@@ -742,9 +737,9 @@ namespace MansLabojums.Helpers
             }
         }
 
-        /// <summary>
-        /// Dzēš iesniegumu pēc submissionId.
-        /// </summary>
+        
+        // Dzēš iesniegumu pēc submissionId.
+        
         public static void DeleteSubmission(int submissionId)
         {
             try

@@ -1,9 +1,5 @@
-﻿/******************************************************
- * MansLabojums/Views/SubmissionsPage.xaml.cs
- * Pilnīgs variants ar ID pieeju Submissions
- ******************************************************/
+﻿using MansLabojums.Helpers;
 using Microsoft.Maui.Controls;
-using MansLabojums.Helpers;
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
@@ -12,7 +8,7 @@ namespace MansLabojums.Views
 {
     public partial class SubmissionsPage : ContentPage
     {
-        // Dati sarakstam
+        // Modeļa apraksts, lai rādītu sarakstā
         public class SubmissionDisplay
         {
             public int Id { get; set; }
@@ -24,30 +20,27 @@ namespace MansLabojums.Views
             public int Score { get; set; }
 
             public string DisplayTitle => $"[{Id}] {AssignmentDescription}";
-            public string DisplayDetail => $"Student: {StudentName}, Score={Score}, {SubmissionTime}";
+            public string DisplayDetail => $"Students: {StudentName}, Score={Score}, {SubmissionTime}";
         }
 
         // Picker items
         public class AssignmentItem
         {
             public int Id { get; set; }
-            public string DisplayText { get; set; } = ""; // ex: "[1] Algebras mājas darbs"
+            public string DisplayText { get; set; } = ""; // "[1] Algebras.."
         }
         public class StudentItem
         {
             public int Id { get; set; }
-            public string DisplayText { get; set; } = ""; // ex: "[2] Ilze Liepa"
+            public string DisplayText { get; set; } = ""; // "[1] Pēteris Ozoliņš"
         }
 
-        // Kolekcijas
         private ObservableCollection<SubmissionDisplay> _subs = new();
+        private SubmissionDisplay _selectedSub;
+
         public ObservableCollection<AssignmentItem> AssignmentList { get; set; } = new();
         public ObservableCollection<StudentItem> StudentList { get; set; } = new();
 
-        // Atlase
-        private SubmissionDisplay _selectedSub;
-
-        // Atlase no pickeriem
         public AssignmentItem SelectedAssignment { get; set; }
         public StudentItem SelectedStudent { get; set; }
 
@@ -66,7 +59,7 @@ namespace MansLabojums.Views
             LoadStudents();
         }
 
-        // Ielasa esošos Submissions no DB
+        // Ielasa submissionus
         private void LoadSubmissions()
         {
             _subs.Clear();
@@ -75,8 +68,6 @@ namespace MansLabojums.Views
             DeleteButton.IsEnabled = false;
 
             var list = DatabaseHelper.GetSubmissionsWithIDs();
-            // satur: "Id", "AssignmentId", "StudentId", "AssignmentDescription", "StudentName", "SubmissionTime", "Score"
-
             foreach (var row in list)
             {
                 _subs.Add(new SubmissionDisplay
@@ -92,7 +83,6 @@ namespace MansLabojums.Views
             }
         }
 
-        // Ielasa assignment ID un description, lai var atlasīt
         private void LoadAssignments()
         {
             AssignmentList.Clear();
@@ -107,7 +97,6 @@ namespace MansLabojums.Views
             }
         }
 
-        // Ielasa studentus
         private void LoadStudents()
         {
             StudentList.Clear();
@@ -130,31 +119,24 @@ namespace MansLabojums.Views
             DeleteButton.IsEnabled = hasSel;
         }
 
-        // Pievienot, izmantojot ID – drošāk, nekā ar vārdiem
+        // Pievieno, izmantojot ID, bet dropdown nodrošina, ka ID eksistē
         private void OnAddSubmissionClicked(object sender, EventArgs e)
         {
             if (SelectedAssignment == null || SelectedStudent == null)
             {
-                DisplayAlert("Kļūda", "Lūdzu izvēlieties uzdevumu un studentu!", "OK");
+                DisplayAlert("Kļūda", "Nepareizi atlasīts uzdevums vai students!", "OK");
                 return;
             }
 
-            string scStr = ScoreEntry.Text?.Trim();
-            if (!int.TryParse(scStr, out int sc))
+            if (!int.TryParse(ScoreEntry.Text, out int sc))
             {
-                DisplayAlert("Kļūda", "Ievadiet derīgu skaitlisku Score!", "OK");
+                DisplayAlert("Kļūda", "Nederīgs score!", "OK");
                 return;
             }
 
             try
             {
-                // Tagad tieši ID:
-                DatabaseHelper.AddSubmissionByIds(
-                    SelectedAssignment.Id,
-                    SelectedStudent.Id,
-                    sc
-                );
-
+                DatabaseHelper.AddSubmissionByIds(SelectedAssignment.Id, SelectedStudent.Id, sc);
                 ClearAddForm();
                 LoadSubmissions();
             }
@@ -178,29 +160,24 @@ namespace MansLabojums.Views
             ClearAddForm();
         }
 
-        // Labot – šeit tikai Score labojam
+        // Rediģē – atļaujam tikai labot Score
         private async void OnEditSubmissionClicked(object sender, EventArgs e)
         {
             if (_selectedSub == null) return;
 
-            string oldScoreStr = _selectedSub.Score.ToString();
-            string newScoreStr = await DisplayPromptAsync("Labot iesniegumu", "Jauns rezultāts:", initialValue: oldScoreStr);
-
-            if (int.TryParse(newScoreStr, out int newScr))
+            string oldScore = _selectedSub.Score.ToString();
+            string newScoreStr = await DisplayPromptAsync("Labot iesniegumu", "Jauns rezultāts:", initialValue: oldScore);
+            if (int.TryParse(newScoreStr, out int newSc))
             {
                 try
                 {
-                    DatabaseHelper.UpdateSubmission(_selectedSub.Id, newScr);
+                    DatabaseHelper.UpdateSubmission(_selectedSub.Id, newSc);
                     LoadSubmissions();
                 }
                 catch (Exception ex)
                 {
                     await DisplayAlert("Kļūda", ex.Message, "OK");
                 }
-            }
-            else
-            {
-                await DisplayAlert("Kļūda", "Nederīgs skaitlis!", "OK");
             }
         }
 
@@ -208,20 +185,20 @@ namespace MansLabojums.Views
         {
             if (_selectedSub == null) return;
 
-            bool confirm = await DisplayAlert("Dzēst iesniegumu?", _selectedSub.AssignmentDescription, "Jā", "Nē");
-            if (confirm)
+            bool confirm = await DisplayAlert("Dzēst iesniegumu?",
+                _selectedSub.AssignmentDescription,
+                "Jā", "Nē");
+            if (!confirm) return;
+
+            try
             {
-                try
-                {
-                    DatabaseHelper.DeleteSubmission(_selectedSub.Id);
-                    LoadSubmissions();
-                }
-                catch (Exception ex)
-                {
-                    await DisplayAlert("Kļūda", ex.Message, "OK");
-                }
+                DatabaseHelper.DeleteSubmission(_selectedSub.Id);
+                LoadSubmissions();
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Kļūda", ex.Message, "OK");
             }
         }
     }
 }
-

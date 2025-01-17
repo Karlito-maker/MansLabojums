@@ -13,7 +13,7 @@ namespace MansLabojums.Views
 
         private void OnInitDbClicked(object sender, EventArgs e)
         {
-            // Inicializē DB (tabulas), ja nav jau
+            // Inicializē DB, ja nav jau
             try
             {
                 DatabaseHelper.InitializeDatabase();

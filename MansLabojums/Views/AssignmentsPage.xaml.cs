@@ -1,10 +1,4 @@
-﻿/******************************************************
- * MansLabojums/Views/AssignmentsPage.xaml.cs
- * Lapā var pievienot, labot un dzēst uzdevumus.
- * Lai var dzēst "testa datus", pirms assignment dzēšanas
- * tiks dzēsti visas ar to saistītās submissions (code cascade).
- ******************************************************/
-using MansLabojums.Helpers;
+﻿using MansLabojums.Helpers;
 using Microsoft.Maui.Controls;
 using System;
 using System.Collections.ObjectModel;
@@ -14,31 +8,42 @@ namespace MansLabojums.Views
 {
     public partial class AssignmentsPage : ContentPage
     {
-        // Modelis, lai rādītu sarakstā
+        // Displejam uzdevumu
         public class AssignmentDisplay
         {
             public int Id { get; set; }
-            public string TitleText { get; set; } = "";   // Piem. "[1] Algebras mājas darbs"
-            public string DetailText { get; set; } = "";  // Piem. "Termiņš: 2024-12-31, CourseId=1"
+            public string TitleText { get; set; } = ""; // "[1] Algebras.."
+            public string DetailText { get; set; } = ""; // "Termiņš: .."
             public int CourseId { get; set; }
+        }
+
+        // Kursu dropdown
+        public class CourseItem
+        {
+            public int Id { get; set; }
+            public string DisplayText { get; set; } = ""; // "[1] Matemātika"
         }
 
         private ObservableCollection<AssignmentDisplay> _assignments = new();
         private AssignmentDisplay _selectedAssignment;
 
+        public ObservableCollection<CourseItem> CourseList { get; set; } = new();
+        public CourseItem SelectedCourse { get; set; }
+
         public AssignmentsPage()
         {
             InitializeComponent();
             AssignmentsListView.ItemsSource = _assignments;
+            BindingContext = this;
         }
 
         protected override void OnAppearing()
         {
             base.OnAppearing();
             LoadAssignments();
+            LoadCourses();
         }
 
-        // Nolasām visus uzdevumus no DB un parādām sarakstā
         private void LoadAssignments()
         {
             _assignments.Clear();
@@ -46,19 +51,35 @@ namespace MansLabojums.Views
             EditButton.IsEnabled = false;
             DeleteButton.IsEnabled = false;
 
+            // Izgūstam assignmentus
             var list = DatabaseHelper.GetAssignments();
-            // Piemēram, satur: Id, Description, Deadline, CourseId
             foreach (var a in list)
             {
-                // Taisām "TitleText" un "DetailText"
-                string tt = $"[{a.Id}] {a.Description}";
-                string dt = $"Termiņš: {a.Deadline:yyyy-MM-dd}, CourseId={a.CourseId}";
+                string title = $"[{a.Id}] {a.Description}";
+                string detail = $"Termiņš: {a.Deadline:yyyy-MM-dd}, CourseId={a.CourseId}";
                 _assignments.Add(new AssignmentDisplay
                 {
                     Id = a.Id,
-                    TitleText = tt,
-                    DetailText = dt,
+                    TitleText = title,
+                    DetailText = detail,
                     CourseId = a.CourseId
+                });
+            }
+        }
+
+        private void LoadCourses()
+        {
+            CourseList.Clear();
+            var cRows = DatabaseHelper.GetCourses();
+            // satur "Id", "Name", "TeacherId"
+            foreach (var row in cRows)
+            {
+                int cid = (int)row["Id"];
+                string cname = row["Name"].ToString()!;
+                CourseList.Add(new CourseItem
+                {
+                    Id = cid,
+                    DisplayText = $"[{cid}] {cname}"
                 });
             }
         }
@@ -71,28 +92,26 @@ namespace MansLabojums.Views
             DeleteButton.IsEnabled = hasSel;
         }
 
-        // Pievieno jaunu assignment
         private void OnAddAssignmentClicked(object sender, EventArgs e)
         {
             string desc = DescriptionEntry.Text?.Trim();
             string dlStr = DeadlineEntry.Text?.Trim();
-            string cIdStr = CourseIdEntry.Text?.Trim();
-
-            // Pārbaudām ievadītos laukus
+            if (SelectedCourse == null)
+            {
+                DisplayAlert("Kļūda", "Nav izvēlēts kurss!", "OK");
+                return;
+            }
             if (string.IsNullOrEmpty(desc) ||
                 string.IsNullOrEmpty(dlStr) ||
-                !DateTime.TryParse(dlStr, out DateTime dl) ||
-                string.IsNullOrEmpty(cIdStr) ||
-                !int.TryParse(cIdStr, out int cid))
+                !DateTime.TryParse(dlStr, out DateTime dl))
             {
-                DisplayAlert("Kļūda", "Nepareizi ievadīti lauki Uzdevumam!", "OK");
+                DisplayAlert("Kļūda", "Nepareizi ievadīts apraksts vai datums!", "OK");
                 return;
             }
 
             try
             {
-                // Pievienojam DB
-                DatabaseHelper.AddAssignment(desc, dl, cid);
+                DatabaseHelper.AddAssignment(desc, dl, SelectedCourse.Id);
                 ClearAddForm();
                 LoadAssignments();
             }
@@ -106,7 +125,8 @@ namespace MansLabojums.Views
         {
             DescriptionEntry.Text = "";
             DeadlineEntry.Text = "";
-            CourseIdEntry.Text = "";
+            SelectedCourse = null;
+            CoursePicker.SelectedItem = null;
         }
 
         private void OnCancelAddClicked(object sender, EventArgs e)
@@ -118,79 +138,100 @@ namespace MansLabojums.Views
         {
             if (_selectedAssignment == null) return;
 
-            // Šeit varam ierosināt jauno aprakstu / termiņu / courseId
-            // Sadalām TitleText "[1] Algebras mājas darbs"?
-            // Vienkāršībai: 
-            string oldDesc = _selectedAssignment.TitleText;
-            string newDesc = await DisplayPromptAsync("Labot uzdevumu", "Jauns apraksts:", initialValue: oldDesc);
+            // Paņemam aprakstu no TitleText => "[1] Algebras.."
+            int bracketPos = _selectedAssignment.TitleText.IndexOf(']');
+            string oldDesc = (bracketPos >= 0 && bracketPos < _selectedAssignment.TitleText.Length - 1)
+                ? _selectedAssignment.TitleText.Substring(bracketPos + 1).Trim()
+                : _selectedAssignment.TitleText;
 
-            // Deadline
-            string[] detailSplit = _selectedAssignment.DetailText.Split(',');
-            // "Termiņš: 2024-12-31" -> u.c.
-            string oldDl = "2024-12-31";
-            int oldCid = _selectedAssignment.CourseId;
-            // Mēģināsim izlobīt, bet drošāk vienkārši:
-            string newDlStr = await DisplayPromptAsync("Labot uzdevumu", "Jauns termiņš (YYYY-MM-DD):", initialValue: "2024-12-31");
-            string newCidStr = await DisplayPromptAsync("Labot uzdevumu", "Jauns CourseId:", initialValue: oldCid.ToString());
-
-            if (!string.IsNullOrEmpty(newDesc) &&
-                DateTime.TryParse(newDlStr, out DateTime newDl) &&
-                int.TryParse(newCidStr, out int newCid))
+            string newDesc = await DisplayPromptAsync("Labot uzdevumu",
+                                                      "Jauns apraksts:",
+                                                      initialValue: oldDesc);
+            string oldDl = _selectedAssignment.DetailText;
+            // "Termiņš: 2024-12-31, CourseId=1"
+            // Principā parse
+            // bet vienkāršības labad:
+            string newDlStr = await DisplayPromptAsync("Labot uzdevumu",
+                                                       "Jauns Deadline (YYYY-MM-DD):",
+                                                       initialValue: "2024-01-01");
+            // TeacherId var labot? Labāk course:
+            // var course = . un prompt
+            var cList = DatabaseHelper.GetCourses();
+            List<string> items = new();
+            foreach (var c in cList)
             {
-                try
-                {
-                    // Pārcērtam "[1]" no newDesc, ja vajag
-                    int bracketPos = newDesc.IndexOf(']');
-                    string pureDesc = (bracketPos >= 0 && bracketPos < newDesc.Length - 1)
-                        ? newDesc.Substring(bracketPos + 1).Trim()
-                        : newDesc;
+                items.Add($"ID={(int)c["Id"]}: {c["Name"]}");
+            }
+            items.Add("Atcelt");
+            string pick = await DisplayActionSheet("Izvēlieties kursu", "Atcelt", null, items.ToArray());
+            if (pick == "Atcelt" || string.IsNullOrEmpty(pick)) return;
 
-                    DatabaseHelper.UpdateAssignment(_selectedAssignment.Id, pureDesc, newDl, newCid);
-                    LoadAssignments();
-                }
-                catch (Exception ex)
+            // Piem. "ID=2: Fizika"
+            int cId = 0;
+            if (pick.StartsWith("ID="))
+            {
+                string[] sp = pick.Split(':');
+                if (sp.Length > 0)
                 {
-                    await DisplayAlert("Kļūda", ex.Message, "OK");
+                    string part1 = sp[0]; // "ID=2"
+                    string[] eq = part1.Split('=');
+                    if (eq.Length > 1)
+                    {
+                        int.TryParse(eq[1], out cId);
+                    }
                 }
+            }
+
+            if (string.IsNullOrEmpty(newDesc) ||
+                !DateTime.TryParse(newDlStr, out DateTime ndl) ||
+                cId <= 0)
+            {
+                // nav korekti
+                return;
+            }
+
+            try
+            {
+                DatabaseHelper.UpdateAssignment(_selectedAssignment.Id, newDesc, ndl, cId);
+                LoadAssignments();
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Kļūda", ex.Message, "OK");
             }
         }
 
-        // Dzēšam assignment, pirms tam dzēšam submissions, kas atsaucas uz to assignment
+        // Dzēš assignment => pirms tam dzēš Submissions
         private async void OnDeleteAssignmentClicked(object sender, EventArgs e)
         {
             if (_selectedAssignment == null) return;
 
-            bool confirm = await DisplayAlert(
-                "Dzēst uzdevumu?",
-                $"Dzēst: {_selectedAssignment.TitleText}",
+            bool confirm = await DisplayAlert("Dzēst uzdevumu?",
+                _selectedAssignment.TitleText,
                 "Jā", "Nē");
+            if (!confirm) return;
 
-            if (confirm)
+            try
             {
-                try
+                // Dzēš Submissions, kas norāda uz assignment
+                var allSubs = DatabaseHelper.GetSubmissionsWithIDs();
+                foreach (var sdict in allSubs)
                 {
-                    // 1) Iegūstam visus Submissions
-                    var allSubs = DatabaseHelper.GetSubmissionsWithIDs();
-                    // 2) Dzēšam tās, kas atsaucas uz _selectedAssignment.Id
-                    foreach (var sdict in allSubs)
+                    int assId = (int)sdict["AssignmentId"];
+                    if (assId == _selectedAssignment.Id)
                     {
-                        int assId = (int)sdict["AssignmentId"];
                         int subId = (int)sdict["Id"];
-                        if (assId == _selectedAssignment.Id)
-                        {
-                            // Dzēšam submission
-                            DatabaseHelper.DeleteSubmission(subId);
-                        }
+                        DatabaseHelper.DeleteSubmission(subId);
                     }
-                    // 3) Tagad var droši dzēst pašu assignment
-                    DatabaseHelper.DeleteAssignment(_selectedAssignment.Id);
+                }
+                // Tagad droši dzēšam assignment
+                DatabaseHelper.DeleteAssignment(_selectedAssignment.Id);
 
-                    LoadAssignments();
-                }
-                catch (Exception ex)
-                {
-                    await DisplayAlert("Kļūda", ex.Message, "OK");
-                }
+                LoadAssignments();
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Kļūda", ex.Message, "OK");
             }
         }
     }

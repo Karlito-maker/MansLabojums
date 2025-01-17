@@ -1,10 +1,7 @@
-﻿<!-- MansLabojums/Views/CoursesPage.xaml -->
-<!-- Kursu (Course) CRUD lapa -->
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MansLabojums.Views.CoursesPage"
              Title="Kursi">
-
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="12">
 
@@ -19,25 +16,25 @@
                       ItemSelected="OnCourseSelected">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <TextCell Text="{Binding DisplayText}"
-                                  Detail="{Binding TeacherText}" />
+                        <TextCell Text="{Binding CourseLabel}"
+                                  Detail="{Binding TeacherLabel}" />
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
 
-            <!-- Pogas labot/dzēst -->
+            <!-- Pogas -->
             <HorizontalStackLayout Spacing="10">
                 <Button x:Name="EditButton"
                         Text="Labot"
-                        Clicked="OnEditCourseClicked"
-                        IsEnabled="False"/>
+                        IsEnabled="False"
+                        Clicked="OnEditCourseClicked"/>
                 <Button x:Name="DeleteButton"
                         Text="Dzēst"
-                        Clicked="OnDeleteCourseClicked"
-                        IsEnabled="False"/>
+                        IsEnabled="False"
+                        Clicked="OnDeleteCourseClicked"/>
             </HorizontalStackLayout>
 
-            <!-- Forma jaunu kursu pievienošanai -->
+            <!-- Pievienot kursu (ar teacher dropdown) -->
             <Frame BackgroundColor="#eeeeee" Padding="10">
                 <VerticalStackLayout Spacing="6">
                     <Label Text="Pievienot kursu"
@@ -45,20 +42,28 @@
                            HorizontalOptions="Center" />
 
                     <Entry x:Name="CourseNameEntry"
-                           Placeholder="Kursa nosaukums (piem. Bioloģija)" />
-                    <Entry x:Name="TeacherIdEntry"
-                           Placeholder="Skolotāja ID (skaitlis)"
-                           Keyboard="Numeric" />
+                           Placeholder="Kursa nosaukums" />
 
+                    <!-- Skolotāja Picker -->
+                    <HorizontalStackLayout>
+                        <Label Text="Skolotājs:" 
+                               VerticalTextAlignment="Center"
+                               WidthRequest="80"/>
+                        <Picker x:Name="TeacherPicker"
+                                ItemsSource="{Binding TeacherList}"
+                                ItemDisplayBinding="{Binding FullName}"
+                                SelectedItem="{Binding SelectedTeacher}"
+                                Title="Izvēlieties skolotāju"
+                                HorizontalOptions="FillAndExpand"/>
+                    </HorizontalStackLayout>
+
+                    <!-- Pievienot + Cancel -->
                     <HorizontalStackLayout Spacing="10">
-                        <Button Text="Pievienot"
-                                Clicked="OnAddCourseClicked"/>
-                        <Button Text="Cancel"
-                                Clicked="OnCancelAddClicked"/>
+                        <Button Text="Pievienot" Clicked="OnAddCourseClicked"/>
+                        <Button Text="Cancel" Clicked="OnCancelAddClicked"/>
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Frame>
-
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

@@ -1,9 +1,7 @@
-﻿<!-- MansLabojums/Views/SubmissionsPage.xaml -->
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MansLabojums.Views.SubmissionsPage"
              Title="Iesniegumi">
-
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="12">
 
@@ -12,11 +10,10 @@
                    FontAttributes="Bold"
                    HorizontalOptions="Center" />
 
-            <!-- Esošo iesniegumu saraksts -->
             <ListView x:Name="SubmissionsListView"
                       SelectionMode="Single"
-                      ItemSelected="OnSubmissionSelected"
-                      HeightRequest="220">
+                      HeightRequest="200"
+                      ItemSelected="OnSubmissionSelected">
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <TextCell Text="{Binding DisplayTitle}"
@@ -25,72 +22,60 @@
                 </ListView.ItemTemplate>
             </ListView>
 
-            <!-- Labot / Dzēst pogas -->
             <HorizontalStackLayout Spacing="10">
-                <Button Text="Labot"
-                        x:Name="EditButton"
-                        Clicked="OnEditSubmissionClicked"
-                        IsEnabled="False" />
-                <Button Text="Dzēst"
-                        x:Name="DeleteButton"
-                        Clicked="OnDeleteSubmissionClicked"
-                        IsEnabled="False" />
+                <Button x:Name="EditButton"
+                        Text="Labot"
+                        IsEnabled="False"
+                        Clicked="OnEditSubmissionClicked"/>
+                <Button x:Name="DeleteButton"
+                        Text="Dzēst"
+                        IsEnabled="False"
+                        Clicked="OnDeleteSubmissionClicked"/>
             </HorizontalStackLayout>
 
-            <!-- Forma jaunu iesniegumu ievadei -->
+            <!-- Jauna submission ievade (ar assignment+student dropdown) -->
             <Frame BackgroundColor="#eeeeee" Padding="10">
                 <VerticalStackLayout Spacing="6">
-                    <Label Text="Pievienot jaunu iesniegumu"
+                    <Label Text="Pievienot iesniegumu"
                            FontAttributes="Bold"
                            HorizontalOptions="Center" />
 
-                    <!-- Assignment Picker -->
+                    <!-- AssignmentPicker -->
                     <HorizontalStackLayout>
-                        <Label Text="Uzdevums:"
+                        <Label Text="Uzdevums:" 
                                VerticalTextAlignment="Center"
-                               WidthRequest="90"/>
+                               WidthRequest="80"/>
                         <Picker x:Name="AssignmentPicker"
-                                Title="Izvēlieties uzdevumu"
                                 ItemsSource="{Binding AssignmentList}"
                                 ItemDisplayBinding="{Binding DisplayText}"
                                 SelectedItem="{Binding SelectedAssignment}"
+                                Title="Izvēlieties uzdevumu"
                                 HorizontalOptions="FillAndExpand"/>
                     </HorizontalStackLayout>
 
-                    <!-- Student Picker -->
+                    <!-- StudentPicker -->
                     <HorizontalStackLayout>
                         <Label Text="Students:"
                                VerticalTextAlignment="Center"
-                               WidthRequest="90"/>
+                               WidthRequest="80"/>
                         <Picker x:Name="StudentPicker"
-                                Title="Izvēlieties studentu"
                                 ItemsSource="{Binding StudentList}"
                                 ItemDisplayBinding="{Binding DisplayText}"
                                 SelectedItem="{Binding SelectedStudent}"
+                                Title="Izvēlieties studentu"
                                 HorizontalOptions="FillAndExpand"/>
                     </HorizontalStackLayout>
 
-                    <!-- Score ievade -->
-                    <HorizontalStackLayout>
-                        <Label Text="Rezultāts:"
-                               VerticalTextAlignment="Center"
-                               WidthRequest="90"/>
-                        <Entry x:Name="ScoreEntry"
-                               Keyboard="Numeric"
-                               HorizontalOptions="FillAndExpand"/>
-                    </HorizontalStackLayout>
+                    <Entry x:Name="ScoreEntry"
+                           Placeholder="Rezultāts (Score)"
+                           Keyboard="Numeric" />
 
-                    <!-- Pievienot + Cancel -->
                     <HorizontalStackLayout Spacing="10">
-                        <Button Text="Pievienot iesniegumu"
-                                Clicked="OnAddSubmissionClicked"/>
-                        <Button Text="Cancel"
-                                Clicked="OnCancelAddClicked"/>
+                        <Button Text="Pievienot" Clicked="OnAddSubmissionClicked"/>
+                        <Button Text="Cancel" Clicked="OnCancelAddClicked"/>
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Frame>
-
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>
