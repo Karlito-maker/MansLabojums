@@ -27,12 +27,12 @@ namespace MansLabojums.Views
         public class AssignmentItem
         {
             public int Id { get; set; }
-            public string DisplayText { get; set; } = ""; // "[1] Algebras.."
+            public string DisplayText { get; set; } = ""; 
         }
         public class StudentItem
         {
             public int Id { get; set; }
-            public string DisplayText { get; set; } = ""; // "[1] Pēteris Ozoliņš"
+            public string DisplayText { get; set; } = ""; 
         }
 
         private ObservableCollection<SubmissionDisplay> _subs = new();
@@ -119,7 +119,7 @@ namespace MansLabojums.Views
             DeleteButton.IsEnabled = hasSel;
         }
 
-        // Pievieno, izmantojot ID, bet dropdown nodrošina, ka ID eksistē
+        // Pievieno, izmantojot ID.
         private void OnAddSubmissionClicked(object sender, EventArgs e)
         {
             if (SelectedAssignment == null || SelectedStudent == null)
@@ -160,7 +160,7 @@ namespace MansLabojums.Views
             ClearAddForm();
         }
 
-        // Rediģē – atļaujam tikai labot Score
+        // Rediģē – atļauj tikai labot Score
         private async void OnEditSubmissionClicked(object sender, EventArgs e)
         {
             if (_selectedSub == null) return;

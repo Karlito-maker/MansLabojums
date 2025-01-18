@@ -138,7 +138,7 @@ namespace MansLabojums.Views
         {
             if (_selectedAssignment == null) return;
 
-            // Paņemam aprakstu no TitleText => "[1] Algebras.."
+            // Paņemam aprakstu no TitleText 
             int bracketPos = _selectedAssignment.TitleText.IndexOf(']');
             string oldDesc = (bracketPos >= 0 && bracketPos < _selectedAssignment.TitleText.Length - 1)
                 ? _selectedAssignment.TitleText.Substring(bracketPos + 1).Trim()
@@ -148,14 +148,11 @@ namespace MansLabojums.Views
                                                       "Jauns apraksts:",
                                                       initialValue: oldDesc);
             string oldDl = _selectedAssignment.DetailText;
-            // "Termiņš: 2024-12-31, CourseId=1"
-            // Principā parse
-            // bet vienkāršības labad:
+          
             string newDlStr = await DisplayPromptAsync("Labot uzdevumu",
                                                        "Jauns Deadline (YYYY-MM-DD):",
                                                        initialValue: "2024-01-01");
-            // TeacherId var labot? Labāk course:
-            // var course = . un prompt
+           
             var cList = DatabaseHelper.GetCourses();
             List<string> items = new();
             foreach (var c in cList)
@@ -166,14 +163,14 @@ namespace MansLabojums.Views
             string pick = await DisplayActionSheet("Izvēlieties kursu", "Atcelt", null, items.ToArray());
             if (pick == "Atcelt" || string.IsNullOrEmpty(pick)) return;
 
-            // Piem. "ID=2: Fizika"
+           
             int cId = 0;
             if (pick.StartsWith("ID="))
             {
                 string[] sp = pick.Split(':');
                 if (sp.Length > 0)
                 {
-                    string part1 = sp[0]; // "ID=2"
+                    string part1 = sp[0]; 
                     string[] eq = part1.Split('=');
                     if (eq.Length > 1)
                     {
@@ -201,7 +198,7 @@ namespace MansLabojums.Views
             }
         }
 
-        // Dzēš assignment => pirms tam dzēš Submissions
+        // Dzēš assignment pirms tam dzēš Submissions
         private async void OnDeleteAssignmentClicked(object sender, EventArgs e)
         {
             if (_selectedAssignment == null) return;

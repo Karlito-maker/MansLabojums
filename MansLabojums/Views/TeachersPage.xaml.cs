@@ -157,7 +157,7 @@ namespace MansLabojums.Views
             }
         }
 
-        // Dzēšam teacher, pirms tam dzēšam visus ar viņu saistītos datus (Courses -> Assignments -> Submissions).
+        // Dzēšam teacher, pirms tam dzēšam visus ar viņu saistītos datus (Courses, Assignments, Submissions).
         private async void OnDeleteTeacherClicked(object sender, EventArgs e)
         {
             if (_selectedTeacher == null) return;
@@ -196,8 +196,7 @@ namespace MansLabojums.Views
                     {
                         if (teacherCourseIds.Contains(asn.CourseId))
                         {
-                            // Tātad tie pieder teacher
-                            // Dzēšam submissions, kas atsaucas uz asn.Id
+                          
                             foreach (var sdict in allSubs)
                             {
                                 int subAssId = (int)sdict["AssignmentId"];

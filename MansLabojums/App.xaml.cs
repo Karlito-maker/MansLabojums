@@ -1,4 +1,4 @@
-﻿// App.xaml.cs
+﻿
 using Microsoft.Maui.Controls;
 
 namespace MansLabojums
@@ -8,7 +8,7 @@ namespace MansLabojums
         public App()
         {
             InitializeComponent();
-            // Norādam, ka Shell (AppShell) būs galvenā lapa
+        
             MainPage = new AppShell();
         }
     }

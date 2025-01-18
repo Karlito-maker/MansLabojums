@@ -136,8 +136,8 @@ namespace MansLabojums.Views
             if (_selectedCourse == null) return;
 
             // Lūdzam jaunu kursa nosaukumu promptā
-            string oldLabel = _selectedCourse.CourseLabel; // "[2] Fizika"
-            // Nolasām “Fizika” 
+            string oldLabel = _selectedCourse.CourseLabel; 
+            
             int bracketPos = oldLabel.IndexOf(']');
             string oldCName = (bracketPos >= 0 && bracketPos < oldLabel.Length - 1)
                 ? oldLabel.Substring(bracketPos + 1).Trim()
@@ -147,9 +147,7 @@ namespace MansLabojums.Views
                                                       "Jauns kursa nosaukums:",
                                                       initialValue: oldCName);
 
-            // Jautāsim ar ActionSheet vai atsevišķu formu? Te ActionSheet teacher atlasei?
-            // Vienkāršības labad: izveidosim viens subdialog. 
-            // Reālāk – var taisīt atsevišķu formu, bet te lai būtu vienkārši:
+            
             var teachers = DatabaseHelper.GetTeachers();
             List<string> items = new();
             foreach (var t in teachers)
@@ -161,16 +159,15 @@ namespace MansLabojums.Views
             string teacherSelected = await DisplayActionSheet("Izvēlieties skolotāju", "Atcelt", null, items.ToArray());
             if (teacherSelected == "Atcelt" || string.IsNullOrEmpty(teacherSelected)) return;
 
-            // Piemēram "ID=2: Anna Kalniņa"
+            
             int teacherId = 0;
             if (teacherSelected.StartsWith("ID="))
             {
-                // Mēģinām nolasīt
-                // "ID=2: Anna Kalniņa" -> splitted[0]="ID=2" splitted[1]=" Anna Kalniņa"
+               
                 string[] splitted = teacherSelected.Split(':');
                 if (splitted.Length > 0)
                 {
-                    string part = splitted[0].Trim(); // "ID=2"
+                    string part = splitted[0].Trim(); 
                     string[] eq = part.Split('=');
                     if (eq.Length > 1)
                     {
@@ -199,7 +196,7 @@ namespace MansLabojums.Views
             }
         }
 
-        // Dzēšam kursu => pirms tam “kaskadēti” dzēšam tā assignmentus un submissionus
+        // Dzēšam kursu pirms tam dzēšam tā assignmentus un submissionus
         private async void OnDeleteCourseClicked(object sender, EventArgs e)
         {
             if (_selectedCourse == null) return;
@@ -219,7 +216,7 @@ namespace MansLabojums.Views
                 {
                     if (asn.CourseId == _selectedCourse.Id)
                     {
-                        // Dzēšam submissions, kas norāda uz asn.Id
+                        // Dzēšam submissions
                         foreach (var sdict in allSubs)
                         {
                             int subAssId = (int)sdict["AssignmentId"];

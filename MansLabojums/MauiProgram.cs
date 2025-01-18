@@ -1,5 +1,4 @@
-﻿// MauiProgram.cs
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace MansLabojums
 {
@@ -9,7 +8,7 @@ namespace MansLabojums
         {
             var builder = MauiApp.CreateBuilder();
             builder
-                .UseMauiApp<App>()  // piesaista App.xaml
+                .UseMauiApp<App>() 
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
